@@ -6,7 +6,7 @@ on:
       - main
 
 jobs:
-  build:
+  deploy:
     runs-on: ubuntu-latest
 
     steps:
@@ -28,6 +28,19 @@ jobs:
         working-directory: frontend
         run: npm run build
 
+      - name: Prepare deployment package
+        run: |
+          mkdir -p deploy/frontend
+          mkdir -p deploy/backend
+
+          cp -a frontend/out/. deploy/frontend/
+          cp -a backend/. deploy/backend/
+
+          rm -rf deploy/backend/node_modules
+          rm -f deploy/backend/.env
+
+          tar -czf deploy.tar.gz -C deploy .
+
       - name: Prepare SSH
         run: |
           mkdir -p ~/.ssh
@@ -35,10 +48,39 @@ jobs:
           chmod 600 ~/.ssh/ai_course_cicd
           ssh-keyscan -p "${{ secrets.SSH_PORT }}" "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts
 
-      - name: Test SSH connection
+      - name: Deploy to server
         run: |
-          ssh \
+          cat deploy.tar.gz | ssh \
             -i ~/.ssh/ai_course_cicd \
             -p "${{ secrets.SSH_PORT }}" \
             "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" \
-            "echo 'GitHub Actions SSH connection successful'"
+            'bash -s' <<'REMOTE_SCRIPT'
+          set -e
+
+          DEPLOY_DIR="$HOME/ai-course-deploy"
+          FRONTEND_DIR="$HOME/public_html/f.api.ai-course.elearnp.com"
+          BACKEND_DIR="$HOME/public_html/api.ai-course.elearnp.com"
+
+          rm -rf "$DEPLOY_DIR"
+          mkdir -p "$DEPLOY_DIR"
+
+          tar -xzf - -C "$DEPLOY_DIR"
+
+          mkdir -p "$FRONTEND_DIR"
+          rm -rf "$FRONTEND_DIR"/*
+          rm -rf "$FRONTEND_DIR"/.[!.]* "$FRONTEND_DIR"/..?* 2>/dev/null || true
+          cp -a "$DEPLOY_DIR/frontend/." "$FRONTEND_DIR/"
+
+          mkdir -p "$BACKEND_DIR"
+          cp -a "$DEPLOY_DIR/backend/." "$BACKEND_DIR/"
+
+          cd "$BACKEND_DIR"
+          npm ci --omit=dev
+
+          mkdir -p tmp
+          touch tmp/restart.txt
+
+          rm -rf "$DEPLOY_DIR"
+
+          echo "Deployment completed successfully"
+          REMOTE_SCRIPT
