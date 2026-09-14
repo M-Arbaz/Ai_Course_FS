@@ -54,6 +54,12 @@ jobs:
             -i ~/.ssh/ai_course_cicd \
             -p "${{ secrets.SSH_PORT }}" \
             "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" \
+            'cat > ~/ai-course-deploy.tar.gz'
+
+          ssh \
+            -i ~/.ssh/ai_course_cicd \
+            -p "${{ secrets.SSH_PORT }}" \
+            "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" \
             'bash -s' <<'REMOTE_SCRIPT'
           set -e
 
@@ -64,7 +70,7 @@ jobs:
           rm -rf "$DEPLOY_DIR"
           mkdir -p "$DEPLOY_DIR"
 
-          tar -xzf - -C "$DEPLOY_DIR"
+          tar -xzf "$HOME/ai-course-deploy.tar.gz" -C "$DEPLOY_DIR"
 
           mkdir -p "$FRONTEND_DIR"
           rm -rf "$FRONTEND_DIR"/*
@@ -81,6 +87,7 @@ jobs:
           touch tmp/restart.txt
 
           rm -rf "$DEPLOY_DIR"
+          rm -f "$HOME/ai-course-deploy.tar.gz"
 
           echo "Deployment completed successfully"
           REMOTE_SCRIPT
