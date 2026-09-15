@@ -36,38 +36,53 @@ jobs:
           mkdir -p deploy/backend
 
           # ===================================
-          # FRONTEND
+          # FRONTEND - NEXT.JS STANDALONE
           # ===================================
 
-          # Copy Next.js standalone build
+          # Exactly same as working local setup
+
+          # Copy public into standalone
+          rm -rf frontend/.next/standalone/public
+          cp -a frontend/public frontend/.next/standalone/public
+
+          # Copy Next static assets into standalone
+          mkdir -p frontend/.next/standalone/.next
+          rm -rf frontend/.next/standalone/.next/static
+          cp -a frontend/.next/static frontend/.next/standalone/.next/static
+
+          # cPanel startup wrapper
+          cp frontend/app.js frontend/.next/standalone/app.js
+
+          # Copy complete ready-to-run standalone app
           cp -a frontend/.next/standalone/. deploy/frontend/
 
-          # cPanel Passenger startup file
-          cp frontend/app.js deploy/frontend/app.js
-
-          # Public folder
-          cp -a frontend/public deploy/frontend/public
-
-          # Next.js internal static assets
-          mkdir -p deploy/frontend/.next
-          cp -a frontend/.next/static deploy/frontend/.next/static
-
-          # cPanel / Apache directly served Next assets
+          # cPanel/Apache direct static serving
           mkdir -p deploy/frontend/_next
           cp -a frontend/.next/static deploy/frontend/_next/static
 
-          # Verify
-          echo "===== FRONTEND ====="
+          # cPanel/Apache direct public file serving
+          cp -a frontend/public/. deploy/frontend/
+
+          # ===================================
+          # VERIFY FRONTEND
+          # ===================================
+
+          echo "===== FRONTEND ROOT ====="
           ls -la deploy/frontend
-          ls -la deploy/frontend/.next/static
-          ls -la deploy/frontend/_next/static
+
+          echo "===== PUBLIC ====="
           ls -la deploy/frontend/public
+
+          echo "===== NEXT STATIC ====="
+          ls -la deploy/frontend/.next/static
+
+          echo "===== APACHE NEXT STATIC ====="
+          ls -la deploy/frontend/_next/static
 
           test -f deploy/frontend/app.js
           test -f deploy/frontend/server.js
-          test -d deploy/frontend/.next/static
-          test -d deploy/frontend/_next/static
           test -d deploy/frontend/public
+          test -d deploy/frontend/.next/static
 
           # ===================================
           # BACKEND
