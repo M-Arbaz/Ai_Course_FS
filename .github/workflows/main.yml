@@ -50,45 +50,40 @@ jobs:
 
       - name: Deploy to server
         run: |
-          base64 -w 0 deploy.tar.gz > deploy.tar.b64
-
-          ssh \
+          cat deploy.tar.gz | ssh \
             -i ~/.ssh/ai_course_cicd \
             -p "${{ secrets.SSH_PORT }}" \
             "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" \
-            'mkdir -p ~/ai-course-deploy && cat > ~/ai-course-deploy/deploy.tar.b64'
+            '
+              set -e
 
-          ssh \
-            -i ~/.ssh/ai_course_cicd \
-            -p "${{ secrets.SSH_PORT }}" \
-            "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" \
-            'bash -s' <<'REMOTE_SCRIPT'
-          set -e
+              DEPLOY_DIR="$HOME/ai-course-deploy"
+              FRONTEND_DIR="$HOME/public_html/f.api.ai-course.elearnp.com"
+              BACKEND_DIR="$HOME/public_html/api.ai-course.elearnp.com"
 
-          DEPLOY_DIR="$HOME/ai-course-deploy"
-          FRONTEND_DIR="$HOME/public_html/f.api.ai-course.elearnp.com"
-          BACKEND_DIR="$HOME/public_html/api.ai-course.elearnp.com"
+              rm -rf "$DEPLOY_DIR"
+              mkdir -p "$DEPLOY_DIR/extracted"
 
-          base64 -d "$DEPLOY_DIR/deploy.tar.b64" > "$DEPLOY_DIR/deploy.tar.gz"
-          mkdir -p "$DEPLOY_DIR/extracted"
+              cat > "$DEPLOY_DIR/deploy.tar.gz"
 
-          tar -xzf "$DEPLOY_DIR/deploy.tar.gz" -C "$DEPLOY_DIR/extracted"
+              tar -xzf "$DEPLOY_DIR/deploy.tar.gz" \
+                -C "$DEPLOY_DIR/extracted"
 
-          mkdir -p "$FRONTEND_DIR"
-          rm -rf "$FRONTEND_DIR"/*
-          rm -rf "$FRONTEND_DIR"/.[!.]* "$FRONTEND_DIR"/..?* 2>/dev/null || true
-          cp -a "$DEPLOY_DIR/extracted/frontend/." "$FRONTEND_DIR/"
+              mkdir -p "$FRONTEND_DIR"
+              rm -rf "$FRONTEND_DIR"/*
+              rm -rf "$FRONTEND_DIR"/.[!.]* "$FRONTEND_DIR"/..?* 2>/dev/null || true
+              cp -a "$DEPLOY_DIR/extracted/frontend/." "$FRONTEND_DIR/"
 
-          mkdir -p "$BACKEND_DIR"
-          cp -a "$DEPLOY_DIR/extracted/backend/." "$BACKEND_DIR/"
+              mkdir -p "$BACKEND_DIR"
+              cp -a "$DEPLOY_DIR/extracted/backend/." "$BACKEND_DIR/"
 
-          cd "$BACKEND_DIR"
-          npm ci --omit=dev
+              cd "$BACKEND_DIR"
+              npm ci --omit=dev
 
-          mkdir -p tmp
-          touch tmp/restart.txt
+              mkdir -p tmp
+              touch tmp/restart.txt
 
-          rm -rf "$DEPLOY_DIR"
+              rm -rf "$DEPLOY_DIR"
 
-          echo "Deployment completed successfully"
-          REMOTE_SCRIPT
+              echo "Deployment completed successfully"
+            '
