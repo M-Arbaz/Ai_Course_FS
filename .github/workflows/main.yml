@@ -33,9 +33,18 @@ jobs:
           mkdir -p deploy/frontend
           mkdir -p deploy/backend
 
-          cp -a frontend/out/. deploy/frontend/
-          cp -a backend/. deploy/backend/
+          # Next.js standalone server
+          cp -a frontend/.next/standalone/. deploy/frontend/
 
+          # Next.js static assets
+          mkdir -p deploy/frontend/.next
+          cp -a frontend/.next/static deploy/frontend/.next/
+
+          # Public assets
+          cp -a frontend/public deploy/frontend/
+
+          # Backend
+          cp -a backend/. deploy/backend/
           rm -rf deploy/backend/node_modules
           rm -f deploy/backend/.env
 
