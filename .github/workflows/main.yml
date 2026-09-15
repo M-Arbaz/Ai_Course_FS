@@ -35,6 +35,7 @@ jobs:
 
           # Next.js standalone server
           cp -a frontend/.next/standalone/. deploy/frontend/
+          cp frontend/app.js deploy/frontend/app.js
 
           # Next.js static assets
           mkdir -p deploy/frontend/.next
