@@ -6,7 +6,16 @@ const app = express();
 const PORT = process.env.PORT || 3002;
 
 app.get('/', (req, res) => {
-    res.json({ message: 'Welcome to the backend server!' });
+    res.json({ message: 'Request => Get' });
+});
+app.post('/', (req, res) => {
+    res.json({ message: 'Request => Post' });
+});
+app.put('/', (req, res) => {
+    res.json({ message: 'Request => Put' });
+});
+app.delete('/', (req, res) => {
+    res.json({ message: 'Request => Delete' });
 });
 
 app.listen(PORT, () => {
