@@ -30,30 +30,58 @@ jobs:
 
       - name: Prepare deployment package
         run: |
+          rm -rf deploy
+
           mkdir -p deploy/frontend
           mkdir -p deploy/backend
 
-          # Next.js standalone server
+          # -----------------------------------
+          # Prepare Next.js standalone properly
+          # -----------------------------------
+
+          # Copy public folder INTO standalone
+          rm -rf frontend/.next/standalone/public
+          cp -a frontend/public frontend/.next/standalone/public
+
+          # Copy Next.js static files INTO standalone
+          mkdir -p frontend/.next/standalone/.next
+          rm -rf frontend/.next/standalone/.next/static
+          cp -a frontend/.next/static frontend/.next/standalone/.next/static
+
+          # Copy cPanel startup file INTO standalone
+          cp frontend/app.js frontend/.next/standalone/app.js
+
+          # Now deploy the COMPLETE standalone directory
           cp -a frontend/.next/standalone/. deploy/frontend/
 
-          # cPanel startup file
-          cp frontend/app.js deploy/frontend/app.js
+          # -----------------------------------
+          # Verify frontend package
+          # -----------------------------------
 
-          # Next.js static assets
-          mkdir -p deploy/frontend/.next
-          cp -a frontend/.next/static deploy/frontend/.next/
+          echo "===== FRONTEND DEPLOYMENT STRUCTURE ====="
+          ls -la deploy/frontend
+          ls -la deploy/frontend/.next
+          ls -la deploy/frontend/.next/static
+          ls -la deploy/frontend/public
 
-          # Public assets
-          cp -a frontend/public deploy/frontend/
+          test -f deploy/frontend/app.js
+          test -f deploy/frontend/server.js
+          test -d deploy/frontend/.next/static
+          test -d deploy/frontend/public
 
+          # -----------------------------------
           # Backend
+          # -----------------------------------
+
           cp -a backend/. deploy/backend/
           rm -rf deploy/backend/node_modules
           rm -f deploy/backend/.env
 
-          # Create deployment archive
-          tar -czf deploy.tar.gz -C deploy .
+          # -----------------------------------
+          # Archive
+          # -----------------------------------
 
+          tar -czf deploy.tar.gz -C deploy .
       - name: Prepare SSH
         run: |
           mkdir -p ~/.ssh
