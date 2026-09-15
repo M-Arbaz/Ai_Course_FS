@@ -36,6 +36,9 @@ jobs:
           # Next.js standalone server
           cp -a frontend/.next/standalone/. deploy/frontend/
 
+          # cPanel startup file
+          cp frontend/app.js deploy/frontend/app.js
+
           # Next.js static assets
           mkdir -p deploy/frontend/.next
           cp -a frontend/.next/static deploy/frontend/.next/
@@ -48,14 +51,22 @@ jobs:
           rm -rf deploy/backend/node_modules
           rm -f deploy/backend/.env
 
+          # Create deployment archive
           tar -czf deploy.tar.gz -C deploy .
 
       - name: Prepare SSH
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY_B64 }}" | base64 -d > ~/.ssh/ai_course_cicd
+
+          echo "${{ secrets.SSH_PRIVATE_KEY_B64 }}" | base64 -d \
+            > ~/.ssh/ai_course_cicd
+
           chmod 600 ~/.ssh/ai_course_cicd
-          ssh-keyscan -p "${{ secrets.SSH_PORT }}" "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts
+
+          ssh-keyscan \
+            -p "${{ secrets.SSH_PORT }}" \
+            "${{ secrets.SSH_HOST }}" \
+            >> ~/.ssh/known_hosts
 
       - name: Deploy to server
         run: |
@@ -67,8 +78,13 @@ jobs:
               set -e
 
               DEPLOY_DIR="$HOME/ai-course-deploy"
+
               FRONTEND_DIR="$HOME/public_html/f.api.ai-course.elearnp.com"
               BACKEND_DIR="$HOME/public_html/api.ai-course.elearnp.com"
+
+              # -----------------------------------
+              # Prepare temporary deployment folder
+              # -----------------------------------
 
               rm -rf "$DEPLOY_DIR"
               mkdir -p "$DEPLOY_DIR/extracted"
@@ -78,19 +94,46 @@ jobs:
               tar -xzf "$DEPLOY_DIR/deploy.tar.gz" \
                 -C "$DEPLOY_DIR/extracted"
 
+              # -----------------------------------
+              # Deploy frontend
+              # -----------------------------------
+
               mkdir -p "$FRONTEND_DIR"
+
               rm -rf "$FRONTEND_DIR"/*
-              rm -rf "$FRONTEND_DIR"/.[!.]* "$FRONTEND_DIR"/..?* 2>/dev/null || true
-              cp -a "$DEPLOY_DIR/extracted/frontend/." "$FRONTEND_DIR/"
+              rm -rf "$FRONTEND_DIR"/.[!.]* \
+                     "$FRONTEND_DIR"/..?* \
+                     2>/dev/null || true
+
+              cp -a \
+                "$DEPLOY_DIR/extracted/frontend/." \
+                "$FRONTEND_DIR/"
+
+              # Restart frontend Node.js application
+              mkdir -p "$FRONTEND_DIR/tmp"
+              touch "$FRONTEND_DIR/tmp/restart.txt"
+
+              # -----------------------------------
+              # Deploy backend
+              # -----------------------------------
 
               mkdir -p "$BACKEND_DIR"
-              cp -a "$DEPLOY_DIR/extracted/backend/." "$BACKEND_DIR/"
+
+              cp -a \
+                "$DEPLOY_DIR/extracted/backend/." \
+                "$BACKEND_DIR/"
 
               cd "$BACKEND_DIR"
+
               npm ci --omit=dev
 
+              # Restart backend Node.js application
               mkdir -p tmp
               touch tmp/restart.txt
+
+              # -----------------------------------
+              # Cleanup
+              # -----------------------------------
 
               rm -rf "$DEPLOY_DIR"
 
