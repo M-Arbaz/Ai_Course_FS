@@ -1,23 +1,35 @@
-import express from 'express';
-import dotenv from 'dotenv';
+import express from "express";
 
-dotenv.config();
 const app = express();
-const PORT = process.env.PORT || 3002;
+const PORT = 3002;
 
-app.get('/', (req, res) => {
-    res.json({ message: `Request => Get ${process.env.PRODUCTION}` });
+// Home route
+app.get("/", (req, res) => {
+    res.send("Hello from Home Route");
 });
-app.post('/', (req, res) => {
-    res.json({ message: 'Request => Post' });
+
+// About route
+app.get("/about", (req, res) => {
+    res.send("Hello from About Route");
 });
-app.put('/', (req, res) => {
-    res.json({ message: 'Request => Put' });
+
+// Courses route
+app.get("/courses", (req, res) => {
+    res.send("Hello from Courses Route");
 });
-app.delete('/', (req, res) => {
-    res.json({ message: 'Request => Delete' });
+
+// Students route
+app.get("/students", (req, res) => {
+    res.send("Hello from Students Route");
+});
+
+// API route
+app.get("/api/hello", (req, res) => {
+    res.json({
+        message: "Hello from Express API"
+    });
 });
 
 app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-}); 
+    console.log(`Server running on http://localhost:${PORT}`);
+});
