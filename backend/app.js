@@ -6,7 +6,7 @@ const app = express();
 const PORT = process.env.PORT || 3002;
 
 app.get('/', (req, res) => {
-    res.json({ message: 'Request => Get' });
+    res.json({ message: `Request => Get ${process.env.PRODUCTION}` });
 });
 app.post('/', (req, res) => {
     res.json({ message: 'Request => Post' });
