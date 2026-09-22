@@ -169,7 +169,7 @@ export default function CoursesPage() {
         <>
             <Navbar />
             <p>
-                {process.env.NEXT_PUBLIC_BACKEND_API_URL || "ENV NOT FOUND"}
+                {api}
             </p>
             <main className="min-h-screen bg-white">
                 <section className="soft-grid relative overflow-hidden border-b border-purple-100">

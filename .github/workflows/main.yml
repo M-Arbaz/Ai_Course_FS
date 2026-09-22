@@ -56,6 +56,9 @@ jobs:
           # Copy complete ready-to-run standalone app
           cp -a frontend/.next/standalone/. deploy/frontend/
 
+          # Copy .htaccess
+          cp frontend/.htaccess deploy/frontend/.htaccess
+
           # cPanel/Apache direct static serving
           mkdir -p deploy/frontend/_next
           cp -a frontend/.next/static deploy/frontend/_next/static
@@ -81,6 +84,7 @@ jobs:
 
           test -f deploy/frontend/app.js
           test -f deploy/frontend/server.js
+          test -f deploy/frontend/.htaccess
           test -d deploy/frontend/public
           test -d deploy/frontend/.next/static
 
