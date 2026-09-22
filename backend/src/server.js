@@ -1,35 +1,36 @@
 import express from "express";
+import cors from "cors";
+import router from "./Routers/routers.js";
 
 const app = express();
-const PORT = 3002;
 
-// Home route
+const PORT = process.env.PORT || 8080;
+
+app.use(
+    cors({
+        origin: [
+            "http://localhost:3000",
+            "https://f.api.ai-course.elearnp.com",
+        ],
+        methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        allowedHeaders: ["Content-Type", "Authorization"],
+    })
+);
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Root test
 app.get("/", (req, res) => {
-    res.send("Hello from Home Route");
-});
-
-// About route
-app.get("/about", (req, res) => {
-    res.send("Hello from About Route");
-});
-
-// Courses route
-app.get("/courses", (req, res) => {
-    res.send("Hello from Courses Route");
-});
-
-// Students route
-app.get("/students", (req, res) => {
-    res.send("Hello from Students Route");
-});
-
-// API route
-app.get("/api/hello", (req, res) => {
     res.json({
-        message: "Hello from Express API"
+        success: true,
+        message: "AI Course backend is running",
     });
 });
 
+// Router
+app.use("/api", router);
+
 app.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`);
+    console.log(`Backend running on port ${PORT}`);
 });
