@@ -96,6 +96,9 @@ jobs:
           rm -rf deploy/backend/node_modules
           rm -f deploy/backend/.env
 
+          # Verify backend .htaccess exists
+          test -f deploy/backend/.htaccess
+
           # ===================================
           # ARCHIVE
           # ===================================
