@@ -164,7 +164,7 @@ export default function CoursesPage() {
             : courses.filter((course) =>
                 filterMap[activeFilter]?.includes(course.type)
             );
-
+    // Tset variable
     return (
         <>
             <Navbar />
