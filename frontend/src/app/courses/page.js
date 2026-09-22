@@ -4,6 +4,7 @@ import { useState } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import backendApi from "@/lib/api";
+const api = backendApi();
 const courses = [
     {
         type: "Complete Program",
@@ -142,7 +143,7 @@ const filters = [
     "Writing",
     "Chatbots",
 ];
-const api = backendApi();
+
 const filterMap = {
     Programs: ["Complete Program", "Fast Track"],
     Video: ["Video Generation"],
@@ -168,9 +169,7 @@ export default function CoursesPage() {
     return (
         <>
             <Navbar />
-            <p>
-                {api}
-            </p>
+
             <main className="min-h-screen bg-white">
                 <section className="soft-grid relative overflow-hidden border-b border-purple-100">
                     <div className="absolute -left-20 top-5 h-72 w-72 rounded-full bg-purple-200/60 blur-3xl" />
