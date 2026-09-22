@@ -147,7 +147,7 @@ export default function Home() {
                             </h1>
 
                             <p className="mt-7 max-w-xl text-lg leading-8 text-slate-600">
-                                Learn today's most powerful AI tools through practical courses
+                                Learn today&rsquo;s most powerful AI tools through practical courses
                                 built for real skills, real work and real results.
                             </p>
 
@@ -520,12 +520,12 @@ export default function Home() {
                                 <div
                                     key={title}
                                     className={`rounded-[25px] p-6 ${index === 0
-                                            ? "bg-white"
-                                            : index === 1
-                                                ? "bg-[#e9ffd0]"
-                                                : index === 2
-                                                    ? "bg-[#dff3ff]"
-                                                    : "bg-[#ffe4ef]"
+                                        ? "bg-white"
+                                        : index === 1
+                                            ? "bg-[#e9ffd0]"
+                                            : index === 2
+                                                ? "bg-[#dff3ff]"
+                                                : "bg-[#ffe4ef]"
                                         }`}
                                 >
                                     <span className="text-xs font-black text-purple-500">
@@ -569,12 +569,12 @@ export default function Home() {
                                 >
                                     <div
                                         className={`flex h-11 w-11 items-center justify-center rounded-full text-xs font-black ${index === 0
-                                                ? "bg-purple-100 text-purple-600"
-                                                : index === 1
-                                                    ? "bg-lime-100 text-lime-700"
-                                                    : index === 2
-                                                        ? "bg-sky-100 text-sky-600"
-                                                        : "bg-pink-100 text-pink-600"
+                                            ? "bg-purple-100 text-purple-600"
+                                            : index === 1
+                                                ? "bg-lime-100 text-lime-700"
+                                                : index === 2
+                                                    ? "bg-sky-100 text-sky-600"
+                                                    : "bg-pink-100 text-pink-600"
                                             }`}
                                     >
                                         {num}
