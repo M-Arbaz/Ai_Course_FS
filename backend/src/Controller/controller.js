@@ -1,6 +1,11 @@
+import "dotenv/config";
 import { sendContactEmails } from "../Email/email.js";
-
 export const contactForm = async (req, res) => {
+    console.log("Contact form request body:", req.body, process.env.MAIL_SERVER);
+    return res.status(200).json({
+        success: true,
+        message: "Contact form route is working.",
+    });
     try {
         const {
             name,

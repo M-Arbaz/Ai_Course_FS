@@ -1,32 +1,34 @@
 import nodemailer from "nodemailer";
+import dotenv from "dotenv";
 
+dotenv.config();
 const transporter = nodemailer.createTransport({
-    host: process.env.MAIL_SERVER,
-    port: Number(process.env.MAIL_PORT || 465),
-    secure: Number(process.env.MAIL_PORT || 465) === 465,
-    auth: {
-        user: process.env.OTP_EMAIL,
-        pass: process.env.OTP_EMAIL_PASS,
-    },
+  host: process.env.MAIL_SERVER,
+  port: Number(process.env.MAIL_PORT || 465),
+  secure: Number(process.env.MAIL_PORT || 465) === 465,
+  auth: {
+    user: process.env.OTP_EMAIL,
+    pass: process.env.OTP_EMAIL_PASS,
+  },
 });
 
 export const sendContactEmails = async ({
-    name,
-    email,
-    phone,
-    subject,
-    message,
+  name,
+  email,
+  phone,
+  subject,
+  message,
 }) => {
-    const receiver =
-        process.env.CONTACT_RECEIVER || "arbazirfan14@gmail.com";
+  const receiver =
+    process.env.CONTACT_RECEIVER || "arbazirfan14@gmail.com";
 
-    // Email to admin
-    await transporter.sendMail({
-        from: `"AI Course Website" <${process.env.OTP_EMAIL}>`,
-        to: receiver,
-        replyTo: email,
-        subject: `New Course Inquiry - ${subject}`,
-        html: `
+  // Email to admin
+  await transporter.sendMail({
+    from: `"AI Course Website" <${process.env.OTP_EMAIL}>`,
+    to: receiver,
+    replyTo: email,
+    subject: `New Course Inquiry - ${subject}`,
+    html: `
       <div style="font-family:Arial,sans-serif;max-width:650px;margin:auto;color:#222;">
         
         <div style="
@@ -81,14 +83,14 @@ export const sendContactEmails = async ({
         </div>
       </div>
     `,
-    });
+  });
 
-    // Confirmation email to user
-    await transporter.sendMail({
-        from: `"AI Course Team" <${process.env.OTP_EMAIL}>`,
-        to: email,
-        subject: "We received your inquiry",
-        html: `
+  // Confirmation email to user
+  await transporter.sendMail({
+    from: `"AI Course Team" <${process.env.OTP_EMAIL}>`,
+    to: email,
+    subject: "We received your inquiry",
+    html: `
       <div style="font-family:Arial,sans-serif;max-width:650px;margin:auto;color:#222;">
 
         <div style="
@@ -141,5 +143,5 @@ export const sendContactEmails = async ({
         </div>
       </div>
     `,
-    });
+  });
 };

@@ -3,8 +3,11 @@
 import { useState } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import api from "@/lib/api";
+import backendApi from "@/lib/api";
+
+const api = backendApi();
 export default function ContactPage() {
+
     const [form, setForm] = useState({
         name: "",
         email: "",
@@ -250,7 +253,7 @@ export default function ContactPage() {
                                     </p>
                                 </div>
 
-                                <form onSubmit={handleSubmit} className="mt-8">
+                                <form onSubmit={(e) => { e.preventDefault(); handleSubmit(e); }} className="mt-8">
 
                                     {/* NAME / EMAIL */}
                                     <div className="grid gap-5 sm:grid-cols-2">
