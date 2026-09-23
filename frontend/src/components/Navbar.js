@@ -40,6 +40,9 @@ export default function Navbar() {
                     <Link href="/#why-us" className="transition hover:text-purple-600">
                         Why Us
                     </Link>
+                    <Link href="/contact" className="transition hover:text-purple-600">
+                        Contact
+                    </Link>
                 </nav>
 
                 <div className="hidden md:block">
@@ -78,7 +81,9 @@ export default function Navbar() {
                         <Link href="/#why-us" onClick={() => setOpen(false)}>
                             Why Us
                         </Link>
-
+                        <Link href="/contact" onClick={() => setOpen(false)}>
+                            Contact
+                        </Link>
                         <Link
                             href="/courses"
                             onClick={() => setOpen(false)}
