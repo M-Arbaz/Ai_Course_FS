@@ -1,4 +1,7 @@
-<IfModule mod_headers.c>
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^ - [L]
+
     Header always unset Cache-Control
     Header always unset Expires
     Header always set Cache-Control "no-store, no-cache, must-revalidate, max-age=0"
