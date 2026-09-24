@@ -66,7 +66,7 @@ const themeMap = {
 async function getCourse(slug) {
     try {
         const response = await fetch(
-            `${api}/api/courses/${encodeURIComponent(slug)}`,
+            `${api()}/api/courses/${encodeURIComponent(slug)}`,
             {
                 cache: "no-store",
             }
