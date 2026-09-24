@@ -10,7 +10,7 @@ const transporter = nodemailer.createTransport({
     pass: process.env.OTP_EMAIL_PASS,
   },
 });
-
+// 
 export const sendContactEmails = async ({
   name,
   email,
