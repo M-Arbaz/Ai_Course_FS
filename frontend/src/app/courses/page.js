@@ -1,10 +1,11 @@
 "use client";
-
+import Link from "next/link";
 import { useState } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import backendApi from "@/lib/api";
 const api = backendApi();
+
 const courses = [
     {
         type: "Complete Program",
@@ -143,7 +144,27 @@ const filters = [
     "Writing",
     "Chatbots",
 ];
+const getCourseSlug = (title) => {
+    const slugMap = {
+        "28 Days AI Challenge": "28-days-ai-challenge",
+        "15 AI Tools Program": "15-ai-tools-program",
+        "Video Generation - A": "video-generation-a",
+        "Video Generation - B": "video-generation-b",
+        "Graphic Designing - A": "graphic-designing-a",
+        "Graphic Designing - B": "graphic-designing-b",
+        "AI Coding - A": "ai-coding-a",
+        "AI Coding - B": "ai-coding-b",
+        "SEO & Marketing": "seo-marketing",
+        "Data & Analytics": "data-analytics",
+        "Sales AI": "sales-ai",
+        "Business AI": "business-ai",
+        "AI Writing": "ai-writing",
+        "AI Chatbot - A": "ai-chatbot-a",
+        "AI Chatbot - B": "ai-chatbot-b",
+    };
 
+    return slugMap[title];
+};
 const filterMap = {
     Programs: ["Complete Program", "Fast Track"],
     Video: ["Video Generation"],
@@ -252,10 +273,13 @@ export default function CoursesPage() {
                                         </p>
                                     </div>
 
-                                    <button className="mt-8 flex w-full items-center justify-between rounded-2xl bg-white/75 px-5 py-4 font-bold text-[#31243d] transition group-hover:bg-white">
+                                    <Link
+                                        href={`/courses/${getCourseSlug(course.title)}`}
+                                        className="mt-8 flex w-full items-center justify-between rounded-2xl bg-white/75 px-5 py-4 font-bold text-[#31243d] transition group-hover:bg-white"
+                                    >
                                         View Course
                                         <span>→</span>
-                                    </button>
+                                    </Link>
                                 </article>
                             ))}
                         </div>
