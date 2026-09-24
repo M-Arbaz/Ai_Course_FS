@@ -1,6 +1,9 @@
 import "dotenv/config";
 import express from "express";
-import { contactForm } from "../Controller/controller.js";
+import {
+    contactForm,
+    getCourseBySlug,
+} from "../Controller/controller.js";
 import db from "../DB/db.js";
 const router = express.Router();
 
@@ -14,5 +17,5 @@ router.get("/test", (req, res) => {
 
 
 router.post("/contact", contactForm);
-
+router.get("/courses/:slug", getCourseBySlug);
 export default router;

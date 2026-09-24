@@ -111,3 +111,74 @@ export const contactForm = async (req, res) => {
             "Your inquiry has been received successfully. Email confirmation could not be sent right now.",
     });
 };
+
+export const getCourseBySlug = async (req, res) => {
+    try {
+        const { slug } = req.params;
+
+        const [courses] = await db.execute(
+            `
+        SELECT
+          id,
+          slug,
+          title,
+          type,
+          duration,
+          level,
+          description,
+          theme
+        FROM courses
+        WHERE slug = ?
+          AND is_active = 1
+        LIMIT 1
+      `,
+            [slug]
+        );
+
+        if (courses.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: "Course not found.",
+            });
+        }
+
+        const course = courses[0];
+
+        const [tools] = await db.execute(
+            `
+        SELECT tool_name
+        FROM course_tools
+        WHERE course_id = ?
+        ORDER BY sort_order ASC, id ASC
+      `,
+            [course.id]
+        );
+
+        const [outcomes] = await db.execute(
+            `
+        SELECT outcome
+        FROM course_outcomes
+        WHERE course_id = ?
+        ORDER BY sort_order ASC, id ASC
+      `,
+            [course.id]
+        );
+
+        return res.status(200).json({
+            success: true,
+            course: {
+                ...course,
+                tools: tools.map((item) => item.tool_name),
+                outcomes: outcomes.map((item) => item.outcome),
+                toolsCount: `${tools.length} AI Tools`,
+            },
+        });
+    } catch (error) {
+        console.error("Get course error:", error);
+
+        return res.status(500).json({
+            success: false,
+            message: "Unable to load course.",
+        });
+    }
+};
