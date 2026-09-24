@@ -147,6 +147,7 @@ const filters = [
 const getCourseSlug = (title) => {
     const slugMap = {
         "28 Days AI Challenge": "28-days-ai-challenge",
+        "15 AI Tools": "15-ai-tools-program",
         "15 AI Tools Program": "15-ai-tools-program",
         "Video Generation - A": "video-generation-a",
         "Video Generation - B": "video-generation-b",
