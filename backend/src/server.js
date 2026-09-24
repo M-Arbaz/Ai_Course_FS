@@ -11,7 +11,7 @@ app.use(
     cors({
         origin: [
             "http://localhost:3000",
-            "https://f.api.ai-course.elearnp.com",
+            "http://f.api.ai-course.elearnp.com",
         ],
         methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
         allowedHeaders: ["Content-Type", "Authorization"],
