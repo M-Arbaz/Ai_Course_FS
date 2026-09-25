@@ -1,6 +1,148 @@
 import "dotenv/config";
 import { sendContactEmails } from "../Email/email.js";
 import db from "../DB/db.js";
+
+const parseBlogTags = (tags) => {
+    if (!tags) return [];
+
+    return tags
+        .split(",")
+        .map((tag) => tag.trim())
+        .filter(Boolean);
+};
+export const getBlogs = async (req, res) => {
+    try {
+        const [blogs] = await db.query(`
+      SELECT
+        id,
+        slug,
+        title,
+        excerpt,
+        image_url,
+        tags,
+        published_at,
+        created_at
+      FROM blogs
+      WHERE status = 'published'
+      ORDER BY COALESCE(published_at, created_at) DESC, id DESC
+    `);
+
+        const formattedBlogs = blogs.map((blog) => ({
+            ...blog,
+            tags: parseBlogTags(blog.tags),
+        }));
+
+        return res.status(200).json({
+            success: true,
+            blogs: formattedBlogs,
+        });
+    } catch (error) {
+        console.error("Get blogs error:", error);
+
+        return res.status(500).json({
+            success: false,
+            message: "Unable to fetch blogs.",
+        });
+    }
+};
+
+export const getBlogBySlug = async (req, res) => {
+    try {
+        const { slug } = req.params;
+
+        const [blogs] = await db.query(
+            `
+        SELECT
+          id,
+          slug,
+          title,
+          excerpt,
+          content,
+          image_url,
+          tags,
+          published_at,
+          created_at,
+          updated_at
+        FROM blogs
+        WHERE slug = ?
+          AND status = 'published'
+        LIMIT 1
+      `,
+            [slug]
+        );
+
+        if (blogs.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: "Blog not found.",
+            });
+        }
+
+        const blog = {
+            ...blogs[0],
+            tags: parseBlogTags(blogs[0].tags),
+        };
+
+        return res.status(200).json({
+            success: true,
+            blog,
+        });
+    } catch (error) {
+        console.error("Get blog error:", error);
+
+        return res.status(500).json({
+            success: false,
+            message: "Unable to fetch blog.",
+        });
+    }
+};
+export const getBlogsByTag = async (req, res) => {
+    try {
+        const tagSlug = req.params.tagSlug
+            .trim()
+            .toLowerCase();
+
+        const [blogs] = await db.query(
+            `
+        SELECT
+          id,
+          slug,
+          title,
+          excerpt,
+          image_url,
+          tags,
+          published_at,
+          created_at
+        FROM blogs
+        WHERE status = 'published'
+          AND FIND_IN_SET(
+            ?,
+            REPLACE(LOWER(tags), ' ', '')
+          ) > 0
+        ORDER BY COALESCE(published_at, created_at) DESC, id DESC
+      `,
+            [tagSlug]
+        );
+
+        const formattedBlogs = blogs.map((blog) => ({
+            ...blog,
+            tags: parseBlogTags(blog.tags),
+        }));
+
+        return res.status(200).json({
+            success: true,
+            tag: tagSlug,
+            blogs: formattedBlogs,
+        });
+    } catch (error) {
+        console.error("Get blogs by tag error:", error);
+
+        return res.status(500).json({
+            success: false,
+            message: "Unable to fetch blogs by tag.",
+        });
+    }
+};
 export const contactForm = async (req, res) => {
     const { name, email, phone, subject, message } = req.body;
 
