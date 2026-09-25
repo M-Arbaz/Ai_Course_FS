@@ -56,7 +56,7 @@ export default function Navbar() {
                     >
                         Explore Courses
                     </Link>
-                    <WebsiteTranslator />
+                    {/* <WebsiteTranslator /> */}
                 </div>
 
                 <button
