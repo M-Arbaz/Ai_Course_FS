@@ -81,6 +81,9 @@ export default function Navbar() {
                         <Link href="/#why-us" onClick={() => setOpen(false)}>
                             Why Us
                         </Link>
+                        <Link href="/blog" onClick={() => setOpen(false)}>
+                            Blog
+                        </Link>
                         <Link href="/contact" onClick={() => setOpen(false)}>
                             Contact
                         </Link>
@@ -93,7 +96,8 @@ export default function Navbar() {
                         </Link>
                     </div>
                 </div>
-            )}
-        </header>
+            )
+            }
+        </header >
     );
 }
