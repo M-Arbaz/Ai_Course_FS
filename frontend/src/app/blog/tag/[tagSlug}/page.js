@@ -45,7 +45,8 @@ export default async function BlogTagPage({
 
     return (
         <main className="min-h-screen bg-white">
-            <section className="bg-gradient-to-br from-purple-100 via-pink-50 to-blue-100 px-6 py-16">
+            {tagSlug}
+            {/* <section className="bg-gradient-to-br from-purple-100 via-pink-50 to-blue-100 px-6 py-16">
                 <div className="mx-auto max-w-7xl">
                     <p className="font-bold text-purple-600">
                         Blog Tag
@@ -80,7 +81,7 @@ export default async function BlogTagPage({
                         </div>
                     )}
                 </div>
-            </section>
+            </section> */}
         </main>
     );
 }
