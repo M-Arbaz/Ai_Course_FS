@@ -2,7 +2,6 @@ import "dotenv/config";
 import express from "express";
 import {
     contactForm,
-    getCourses,
     getCourseBySlug,
     getBlogs,
     getBlogBySlug,
