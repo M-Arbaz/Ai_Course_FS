@@ -95,7 +95,10 @@ export default async function BlogDetailPage({
                         )}
 
                         <div className="whitespace-pre-line text-lg leading-9 text-slate-700">
-                            {blog.content}
+                            <div
+                                className="blog-content"
+                                dangerouslySetInnerHTML={{ __html: blog.content }}
+                            />
                         </div>
                     </div>
                 </article>
