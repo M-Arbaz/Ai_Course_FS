@@ -2,6 +2,7 @@ import api from "@/lib/api";
 import BlogCard from "@/components/BlogCard";
 
 async function getBlogsByTag(tagSlug) {
+
     const response = await fetch(
         `${api()}/api/blogs/tag/${encodeURIComponent(tagSlug)}`,
         {
