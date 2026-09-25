@@ -49,14 +49,18 @@ export default function Navbar() {
                     </Link>
                 </nav>
 
-                <div className="hidden md:block">
+                <div className="hidden items-center gap-3 md:flex">
+
+                    {/* Translator */}
+                    <WebsiteTranslator />
+
+                    {/* CTA */}
                     <Link
                         href="/courses"
                         className="inline-flex items-center rounded-full bg-[#a3e635] px-5 py-2.5 text-sm font-bold text-[#243300] shadow-sm transition hover:-translate-y-0.5 hover:bg-[#b7ef59]"
                     >
                         Explore Courses
                     </Link>
-                    {/* <WebsiteTranslator /> */}
                 </div>
 
                 <button
@@ -92,6 +96,9 @@ export default function Navbar() {
                         <Link href="/contact" onClick={() => setOpen(false)}>
                             Contact
                         </Link>
+                        <div className="mt-2">
+                            <WebsiteTranslator />
+                        </div>
                         <Link
                             href="/courses"
                             onClick={() => setOpen(false)}
