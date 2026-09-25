@@ -70,6 +70,7 @@ const featuredCourses = [
         info: "28 AI Tools",
         bg: "bg-[#efe7ff]",
         badge: "bg-purple-600 text-white",
+        href: "/courses/28-days-ai-challenge",
     },
     {
         tag: "Fast Track",
@@ -79,6 +80,7 @@ const featuredCourses = [
         info: "15 AI Tools",
         bg: "bg-[#eaffcb]",
         badge: "bg-[#a3e635] text-[#243500]",
+        href: "/courses/15-ai-tools-program",
     },
     {
         tag: "Video",
@@ -88,6 +90,7 @@ const featuredCourses = [
         info: "4 Tools",
         bg: "bg-[#ffe7f1]",
         badge: "bg-pink-500 text-white",
+        href: "/courses/video-generation-a",
     },
     {
         tag: "Design",
@@ -97,6 +100,7 @@ const featuredCourses = [
         info: "4 Tools",
         bg: "bg-[#e2f4ff]",
         badge: "bg-sky-500 text-white",
+        href: "/courses/graphic-designing-a",
     },
     {
         tag: "Coding",
@@ -106,6 +110,7 @@ const featuredCourses = [
         info: "4 Tools",
         bg: "bg-[#efffd9]",
         badge: "bg-lime-500 text-[#253300]",
+        href: "/courses/ai-coding-a",
     },
     {
         tag: "Business",
@@ -115,6 +120,7 @@ const featuredCourses = [
         info: "4 Tools",
         bg: "bg-[#e6e2ff]",
         badge: "bg-indigo-500 text-white",
+        href: "/courses/business-ai",
     },
 ];
 
@@ -451,7 +457,7 @@ export default function Home() {
                                     </div>
 
                                     <Link
-                                        href="/courses"
+                                        href={course.href}
                                         className="mt-7 inline-flex items-center font-bold text-[#312540]"
                                     >
                                         View course →
