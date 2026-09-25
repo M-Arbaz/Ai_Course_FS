@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import WebsiteTranslator from "./WebsiteTranslator";
 
 export default function Navbar() {
     const [open, setOpen] = useState(false);
@@ -55,6 +56,7 @@ export default function Navbar() {
                     >
                         Explore Courses
                     </Link>
+                    <WebsiteTranslator />
                 </div>
 
                 <button
