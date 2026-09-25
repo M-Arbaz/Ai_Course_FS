@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
 
 const languages = [
     { code: "en", label: "English", short: "EN" },
@@ -13,81 +14,160 @@ const languages = [
 ];
 
 export default function WebsiteTranslator() {
+    const pathname = usePathname();
+
     const [open, setOpen] = useState(false);
     const [selected, setSelected] = useState(languages[0]);
     const [ready, setReady] = useState(false);
 
     const dropdownRef = useRef(null);
+    const intervalRef = useRef(null);
 
-    useEffect(() => {
-        // GTranslate settings
-        window.gtranslateSettings = {
-            default_language: "en",
-            languages: ["en", "fr", "es", "zh-CN", "ur", "fa", "ar"],
-            wrapper_selector: ".gtranslate_wrapper",
-        };
+    // Get hidden GTranslate select
+    const getTranslateSelect = () => {
+        return document.querySelector(
+            "#gtranslate-wrapper select"
+        );
+    };
 
-        const initializeScript = () => {
-            // Script already loaded
-            if (document.getElementById("gtranslate-script")) {
-                waitForGTranslate();
-                return;
+    // Wait until GTranslate generates select
+    const waitForSelect = () => {
+        if (intervalRef.current) {
+            clearInterval(intervalRef.current);
+        }
+
+        let attempts = 0;
+
+        intervalRef.current = setInterval(() => {
+            attempts++;
+
+            const select = getTranslateSelect();
+
+            if (select) {
+                setReady(true);
+
+                if (intervalRef.current) {
+                    clearInterval(intervalRef.current);
+                    intervalRef.current = null;
+                }
             }
 
-            const script = document.createElement("script");
+            if (attempts >= 50) {
+                if (intervalRef.current) {
+                    clearInterval(intervalRef.current);
+                    intervalRef.current = null;
+                }
+            }
+        }, 100);
+    };
 
-            script.id = "gtranslate-script";
-            script.src =
-                "https://cdn.gtranslate.net/widgets/latest/dropdown.js";
-            script.async = true;
+    // Initialize / reinitialize GTranslate
+    const loadGTranslate = () => {
+        const wrapper = document.getElementById(
+            "gtranslate-wrapper"
+        );
 
-            script.onload = () => {
-                waitForGTranslate();
-            };
+        if (!wrapper) return;
 
-            document.body.appendChild(script);
+        window.gtranslateSettings = {
+            default_language: "en",
+            languages: [
+                "en",
+                "fr",
+                "es",
+                "zh-CN",
+                "ur",
+                "fa",
+                "ar",
+            ],
+            wrapper_selector: "#gtranslate-wrapper",
         };
 
-        const waitForGTranslate = () => {
-            let attempts = 0;
+        const existingSelect = getTranslateSelect();
 
-            const interval = setInterval(() => {
-                const select = document.querySelector(
-                    ".gtranslate_wrapper select"
-                );
+        // Already working
+        if (existingSelect) {
+            setReady(true);
+            return;
+        }
 
-                attempts++;
+        setReady(false);
 
-                if (select) {
-                    setReady(true);
-                    clearInterval(interval);
+        // Remove old script because Next.js page navigation
+        // does not automatically execute it again
+        const oldScript =
+            document.getElementById("gtranslate-script");
 
-                    // Detect current GTranslate language
-                    const currentValue = select.value || "";
+        if (oldScript) {
+            oldScript.remove();
+        }
 
-                    const found = languages.find(
-                        (language) =>
-                            currentValue === language.code ||
-                            currentValue.endsWith(`|${language.code}`)
-                    );
+        wrapper.innerHTML = "";
 
-                    if (found) {
-                        setSelected(found);
-                    }
-                }
+        const script = document.createElement("script");
 
-                if (attempts > 50) {
-                    clearInterval(interval);
-                }
-            }, 100);
+        script.id = "gtranslate-script";
+        script.src =
+            "https://cdn.gtranslate.net/widgets/latest/dropdown.js";
+
+        script.async = true;
+
+        script.onload = () => {
+            waitForSelect();
         };
 
-        initializeScript();
+        document.body.appendChild(script);
+    };
+
+    // First load
+    useEffect(() => {
+        const savedLanguage =
+            localStorage.getItem("selected-language");
+
+        if (savedLanguage) {
+            const found = languages.find(
+                (language) =>
+                    language.code === savedLanguage
+            );
+
+            if (found) {
+                setSelected(found);
+            }
+        }
+
+        const timer = setTimeout(() => {
+            loadGTranslate();
+        }, 200);
+
+        return () => {
+            clearTimeout(timer);
+
+            if (intervalRef.current) {
+                clearInterval(intervalRef.current);
+            }
+        };
     }, []);
 
-    // Click outside
+    // Fix after Next.js page change
     useEffect(() => {
-        const handleClickOutside = (event) => {
+        setOpen(false);
+
+        const timer = setTimeout(() => {
+            const select = getTranslateSelect();
+
+            if (select) {
+                setReady(true);
+            } else {
+                loadGTranslate();
+            }
+        }, 300);
+
+        return () => clearTimeout(timer);
+    }, [pathname]);
+
+    // Close dropdown when clicking outside
+    useEffect(() => {
+        const handleOutsideClick = (event) => {
             if (
                 dropdownRef.current &&
                 !dropdownRef.current.contains(event.target)
@@ -96,64 +176,98 @@ export default function WebsiteTranslator() {
             }
         };
 
-        document.addEventListener("mousedown", handleClickOutside);
+        document.addEventListener(
+            "mousedown",
+            handleOutsideClick
+        );
 
         return () => {
             document.removeEventListener(
                 "mousedown",
-                handleClickOutside
+                handleOutsideClick
             );
         };
     }, []);
 
-    const changeLanguage = (language) => {
-        const select = document.querySelector(
-            ".gtranslate_wrapper select"
+    // Apply language
+    const applyLanguage = (select, language) => {
+        const options = Array.from(select.options);
+
+        const option = options.find(
+            (item) =>
+                item.value === language.code ||
+                item.value.endsWith(
+                    `|${language.code}`
+                )
         );
 
-        if (!select) {
-            console.warn("GTranslate is not ready yet.");
-            return;
-        }
-
-        // GTranslate can use values like:
-        // fr
-        // OR
-        // en|fr
-        const matchingOption = [...select.options].find(
-            (option) =>
-                option.value === language.code ||
-                option.value.endsWith(`|${language.code}`)
-        );
-
-        if (!matchingOption) {
-            console.warn(
-                `Language ${language.code} not found in GTranslate.`
+        if (!option) {
+            console.log(
+                "Language not found:",
+                language.code
             );
             return;
         }
 
-        select.value = matchingOption.value;
+        select.value = option.value;
 
         select.dispatchEvent(
             new Event("change", {
                 bubbles: true,
             })
         );
+    };
 
+    // Language click
+    const changeLanguage = (language) => {
         setSelected(language);
         setOpen(false);
+
+        localStorage.setItem(
+            "selected-language",
+            language.code
+        );
+
+        const select = getTranslateSelect();
+
+        // GTranslate available
+        if (select) {
+            applyLanguage(select, language);
+            return;
+        }
+
+        // GTranslate disappeared after route change
+        loadGTranslate();
+
+        let attempts = 0;
+
+        const interval = setInterval(() => {
+            attempts++;
+
+            const newSelect = getTranslateSelect();
+
+            if (newSelect) {
+                clearInterval(interval);
+                applyLanguage(newSelect, language);
+            }
+
+            if (attempts >= 50) {
+                clearInterval(interval);
+            }
+        }, 100);
     };
 
     return (
         <div
             ref={dropdownRef}
-            className="relative z-[9999]"
+            className="relative z-[99999]"
         >
-            {/* Custom Button */}
+            {/* Main button */}
             <button
                 type="button"
-                onClick={() => ready && setOpen((prev) => !prev)}
+                onClick={() =>
+                    setOpen((previous) => !previous)
+                }
                 className="
           group
           flex
@@ -201,18 +315,22 @@ export default function WebsiteTranslator() {
                         strokeLinecap="round"
                         strokeLinejoin="round"
                     >
-                        <circle cx="12" cy="12" r="10" />
+                        <circle
+                            cx="12"
+                            cy="12"
+                            r="10"
+                        />
+
                         <path d="M2 12h20" />
-                        <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1 4-10 15.3 15.3 0 0 1 4-10z" />
+
+                        <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
                     </svg>
                 </div>
 
                 {/* Selected language */}
-                <div className="flex flex-1 items-center gap-2 text-left">
-                    <span className="text-sm font-medium text-gray-700">
-                        {selected.label}
-                    </span>
-                </div>
+                <span className="flex-1 text-left text-sm font-medium text-gray-700">
+                    {selected.label}
+                </span>
 
                 {/* Arrow */}
                 <svg
@@ -223,7 +341,11 @@ export default function WebsiteTranslator() {
             text-gray-400
             transition-transform
             duration-300
-            ${open ? "rotate-180 text-indigo-500" : ""}
+
+            ${open
+                            ? "rotate-180 text-indigo-500"
+                            : ""
+                        }
           `}
                     xmlns="http://www.w3.org/2000/svg"
                     viewBox="0 0 20 20"
@@ -237,31 +359,34 @@ export default function WebsiteTranslator() {
                 </svg>
             </button>
 
-            {/* Modern Dropdown */}
+            {/* Custom modern dropdown */}
             {open && (
                 <div
                     className="
             absolute
             right-0
             top-[calc(100%+8px)]
+            z-[999999]
             w-full
+            min-w-[220px]
             overflow-hidden
             rounded-xl
             border
             border-gray-200
             bg-white
             p-1.5
-            shadow-xl
+            shadow-2xl
           "
                 >
                     {languages.map((language) => {
                         const active =
-                            selected.code === language.code;
+                            selected.code ===
+                            language.code;
 
                         return (
                             <button
-                                type="button"
                                 key={language.code}
+                                type="button"
                                 onClick={() =>
                                     changeLanguage(language)
                                 }
@@ -283,12 +408,13 @@ export default function WebsiteTranslator() {
                                     }
                 `}
                             >
-                                {/* Language Code */}
+                                {/* Code */}
                                 <div
                                     className={`
                     flex
                     h-8
                     w-8
+                    shrink-0
                     items-center
                     justify-center
                     rounded-lg
@@ -304,6 +430,7 @@ export default function WebsiteTranslator() {
                                     {language.short}
                                 </div>
 
+                                {/* Name */}
                                 <span className="flex-1 text-sm font-medium">
                                     {language.label}
                                 </span>
@@ -325,11 +452,20 @@ export default function WebsiteTranslator() {
                             </button>
                         );
                     })}
+
+                    {!ready && (
+                        <div className="border-t border-gray-100 px-3 py-2 text-center text-xs text-gray-400">
+                            Translator loading...
+                        </div>
+                    )}
                 </div>
             )}
 
-            {/* Actual GTranslate widget - hidden */}
-            <div className="gtranslate_wrapper hidden" />
+            {/* Real GTranslate widget */}
+            <div
+                id="gtranslate-wrapper"
+                className="gtranslate_wrapper hidden"
+            />
         </div>
     );
 }
