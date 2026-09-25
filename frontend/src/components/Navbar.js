@@ -40,6 +40,9 @@ export default function Navbar() {
                     <Link href="/#why-us" className="transition hover:text-purple-600">
                         Why Us
                     </Link>
+                    <Link href="/blog" className="transition hover:text-purple-600">
+                        Blog
+                    </Link>
                     <Link href="/contact" className="transition hover:text-purple-600">
                         Contact
                     </Link>
