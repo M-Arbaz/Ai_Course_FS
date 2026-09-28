@@ -324,3 +324,178 @@ export const getCourseBySlug = async (req, res) => {
         });
     }
 };
+
+
+
+// ==========================================
+// AI ASSESSMENT
+// ==========================================
+
+export const submitAiAssessment = async (req, res) => {
+    try {
+        const {
+            name = "",
+            email,
+            answers = {},
+        } = req.body;
+
+        // -----------------------------
+        // Basic validation
+        // -----------------------------
+
+        if (!email || !email.trim()) {
+            return res.status(400).json({
+                success: false,
+                message: "Email is required.",
+            });
+        }
+
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+        if (!emailRegex.test(email.trim())) {
+            return res.status(400).json({
+                success: false,
+                message: "Please enter a valid email address.",
+            });
+        }
+
+        if (!answers || typeof answers !== "object") {
+            return res.status(400).json({
+                success: false,
+                message: "Assessment answers are required.",
+            });
+        }
+
+        // -----------------------------
+        // SCORE CALCULATION
+        // -----------------------------
+
+        let rawScore = 0;
+
+        // Q1: AI usage
+        const usageScores = {
+            never: 0,
+            sometimes: 5,
+            weekly: 10,
+            daily: 15,
+        };
+
+        rawScore += usageScores[answers.usage] || 0;
+
+        // Q2: Number of AI tools already used
+        if (Array.isArray(answers.toolsUsed)) {
+            const realTools = answers.toolsUsed.filter(
+                (tool) => tool && tool !== "none"
+            );
+
+            rawScore += Math.min(realTools.length * 3, 15);
+        }
+
+        // Q3: Confidence
+        const confidenceScores = {
+            beginner: 2,
+            basic: 5,
+            comfortable: 10,
+            "very-confident": 15,
+        };
+
+        rawScore += confidenceScores[answers.confidence] || 0;
+
+        // Q5: Prompting knowledge
+        const promptingScores = {
+            "no-idea": 0,
+            basic: 5,
+            good: 10,
+            advanced: 15,
+        };
+
+        rawScore += promptingScores[answers.prompting] || 0;
+
+        // Q6: Project / workflow experience
+        const projectScores = {
+            never: 0,
+            "small-tasks": 8,
+            "complete-projects": 14,
+            "automated-workflows": 20,
+        };
+
+        rawScore += projectScores[answers.projects] || 0;
+
+        // Maximum raw score = 80
+        const score = Math.min(
+            100,
+            Math.round((rawScore / 80) * 100)
+        );
+
+        // -----------------------------
+        // LEVEL
+        // -----------------------------
+
+        let aiLevel = "AI Beginner";
+
+        if (score <= 30) {
+            aiLevel = "AI Beginner";
+        } else if (score <= 55) {
+            aiLevel = "AI Explorer";
+        } else if (score <= 75) {
+            aiLevel = "AI Practitioner";
+        } else {
+            aiLevel = "AI Power User";
+        }
+
+        // Course recommendation mapping
+        // Next step mein actual DB course slugs connect karenge.
+        const recommendedCourses = [];
+
+        // -----------------------------
+        // SAVE TO DATABASE
+        // -----------------------------
+
+        const [result] = await db.execute(
+            `
+      INSERT INTO ai_assessments
+      (
+        name,
+        email,
+        answers,
+        score,
+        ai_level,
+        recommended_courses,
+        source
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+      `,
+            [
+                name.trim() || null,
+                email.trim().toLowerCase(),
+                JSON.stringify(answers),
+                score,
+                aiLevel,
+                JSON.stringify(recommendedCourses),
+                "ai-assessment",
+            ]
+        );
+
+        // -----------------------------
+        // RESPONSE
+        // -----------------------------
+
+        return res.status(201).json({
+            success: true,
+            message: "Assessment completed successfully.",
+            assessmentId: result.insertId,
+            score,
+            level: aiLevel,
+            interest: answers.interest || null,
+            goal: answers.goal || null,
+            recommendedCourses,
+        });
+    } catch (error) {
+        console.error("AI assessment error:", error);
+
+        return res.status(500).json({
+            success: false,
+            message: "Unable to complete AI assessment.",
+        });
+    }
+};
