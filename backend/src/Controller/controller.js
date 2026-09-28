@@ -253,7 +253,41 @@ export const contactForm = async (req, res) => {
             "Your inquiry has been received successfully. Email confirmation could not be sent right now.",
     });
 };
+// ==========================================
+// GET ALL ACTIVE COURSES
+// ==========================================
 
+export const getCourses = async (req, res) => {
+    try {
+        const [courses] = await db.execute(`
+      SELECT
+        id,
+        slug,
+        title,
+        type,
+        duration,
+        level,
+        description,
+        theme,
+        sort_order
+      FROM courses
+      WHERE is_active = 1
+      ORDER BY sort_order ASC, id ASC
+    `);
+
+        return res.status(200).json({
+            success: true,
+            courses,
+        });
+    } catch (error) {
+        console.error("Get courses error:", error);
+
+        return res.status(500).json({
+            success: false,
+            message: "Unable to fetch courses.",
+        });
+    }
+};
 export const getCourseBySlug = async (req, res) => {
     try {
         const { slug } = req.params;

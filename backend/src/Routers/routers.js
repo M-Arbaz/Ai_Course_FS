@@ -6,7 +6,8 @@ import {
     getBlogs,
     getBlogBySlug,
     getBlogsByTag,
-    submitAiAssessment
+    submitAiAssessment,
+    getCourses
 } from "../Controller/controller.js";
 import db from "../DB/db.js";
 const router = express.Router();
@@ -22,6 +23,7 @@ router.get("/test", (req, res) => {
 
 router.post("/contact", contactForm);
 router.get("/courses/:slug", getCourseBySlug);
+router.get("/courses", getCourses);
 router.get("/blogs", getBlogs);
 
 router.get("/blogs/tag/:tagSlug", getBlogsByTag);
