@@ -950,19 +950,29 @@ export const signup = async (req, res) => {
 
         const [existingUsers] = await db.execute(
             `
-            SELECT id
-            FROM users
-            WHERE email = ?
-            LIMIT 1
-            `,
+    SELECT
+        id,
+        email_verified_at
+    FROM users
+    WHERE email = ?
+    LIMIT 1
+    `,
             [cleanEmail]
         );
 
-        if (existingUsers.length > 0) {
+        const existingUser =
+            existingUsers.length > 0
+                ? existingUsers[0]
+                : null;
+
+        if (
+            existingUser &&
+            existingUser.email_verified_at
+        ) {
             return res.status(409).json({
                 success: false,
                 message:
-                    "An account with this email already exists.",
+                    "An account with this email already exists. Please sign in.",
             });
         }
 
@@ -973,30 +983,54 @@ export const signup = async (req, res) => {
         const passwordHash =
             await hashPassword(password);
 
-        // --------------------------------------
-        // Create user
-        // --------------------------------------
+        let userId;
 
-        const [result] = await db.execute(
-            `
-            INSERT INTO users
-            (
-                first_name,
-                last_name,
-                email,
-                password_hash,
-                email_verified_at,
-                status
-            )
-            VALUES (?, ?, ?, ?, NULL, 'active')
-            `,
-            [
-                cleanFirstName,
-                cleanLastName,
-                cleanEmail,
-                passwordHash,
-            ]
-        );
+        if (existingUser) {
+            // Existing but NOT verified:
+            // update pending registration instead of duplicate error
+            await db.execute(
+                `
+        UPDATE users
+        SET
+            first_name = ?,
+            last_name = ?,
+            password_hash = ?,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+        `,
+                [
+                    cleanFirstName,
+                    cleanLastName,
+                    passwordHash,
+                    existingUser.id,
+                ]
+            );
+
+            userId = existingUser.id;
+        } else {
+            const [result] = await db.execute(
+                `
+        INSERT INTO users
+        (
+            first_name,
+            last_name,
+            email,
+            password_hash,
+            email_verified_at,
+            status
+        )
+        VALUES (?, ?, ?, ?, NULL, 'active')
+        `,
+                [
+                    cleanFirstName,
+                    cleanLastName,
+                    cleanEmail,
+                    passwordHash,
+                ]
+            );
+
+            userId = result.insertId;
+        }
 
         // --------------------------------------
         // Success response
@@ -1008,7 +1042,7 @@ export const signup = async (req, res) => {
             message:
                 "Account created successfully. Email verification is required.",
             user: {
-                id: result.insertId,
+                id: userId,
                 firstName: cleanFirstName,
                 lastName: cleanLastName,
                 email: cleanEmail,
