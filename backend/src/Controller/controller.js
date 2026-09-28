@@ -1,6 +1,28 @@
 import "dotenv/config";
 import { sendContactEmails } from "../Email/email.js";
 import db from "../DB/db.js";
+import {
+    randomBytes,
+    scrypt as scryptCallback,
+} from "node:crypto";
+
+import { promisify } from "node:util";
+
+const scrypt = promisify(scryptCallback);
+
+const hashPassword = async (password) => {
+    const salt = randomBytes(16).toString("hex");
+
+    const derivedKey = await scrypt(
+        password,
+        salt,
+        64
+    );
+
+    return `scrypt$${salt}$${Buffer.from(
+        derivedKey
+    ).toString("hex")}`;
+};
 
 const parseBlogTags = (tags) => {
     if (!tags) return [];
@@ -796,6 +818,219 @@ export const submitAiAssessment = async (req, res) => {
         return res.status(500).json({
             success: false,
             message: "Unable to complete AI assessment.",
+        });
+    }
+};
+
+
+// ==========================================
+// AUTH - SIGNUP
+// ==========================================
+
+export const signup = async (req, res) => {
+    try {
+        const {
+            firstName,
+            lastName,
+            email,
+            password,
+            confirmPassword,
+        } = req.body;
+
+        // --------------------------------------
+        // Required fields
+        // --------------------------------------
+
+        if (
+            !firstName ||
+            !lastName ||
+            !email ||
+            !password ||
+            !confirmPassword
+        ) {
+            return res.status(400).json({
+                success: false,
+                message: "Please fill in all required fields.",
+            });
+        }
+
+        // --------------------------------------
+        // Clean values
+        // --------------------------------------
+
+        const cleanFirstName = String(firstName).trim();
+        const cleanLastName = String(lastName).trim();
+        const cleanEmail = String(email)
+            .trim()
+            .toLowerCase();
+
+        // --------------------------------------
+        // Name validation
+        // --------------------------------------
+
+        if (
+            cleanFirstName.length < 2 ||
+            cleanFirstName.length > 100
+        ) {
+            return res.status(400).json({
+                success: false,
+                message:
+                    "First name must be between 2 and 100 characters.",
+            });
+        }
+
+        if (
+            cleanLastName.length < 2 ||
+            cleanLastName.length > 100
+        ) {
+            return res.status(400).json({
+                success: false,
+                message:
+                    "Last name must be between 2 and 100 characters.",
+            });
+        }
+
+        // --------------------------------------
+        // Email validation
+        // --------------------------------------
+
+        const emailRegex =
+            /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+        if (!emailRegex.test(cleanEmail)) {
+            return res.status(400).json({
+                success: false,
+                message:
+                    "Please enter a valid email address.",
+            });
+        }
+
+        // --------------------------------------
+        // Password validation
+        // --------------------------------------
+
+        if (password !== confirmPassword) {
+            return res.status(400).json({
+                success: false,
+                message:
+                    "Password and confirm password do not match.",
+            });
+        }
+
+        if (
+            password.length < 8 ||
+            password.length > 128
+        ) {
+            return res.status(400).json({
+                success: false,
+                message:
+                    "Password must be between 8 and 128 characters.",
+            });
+        }
+
+        if (!/[A-Za-z]/.test(password)) {
+            return res.status(400).json({
+                success: false,
+                message:
+                    "Password must contain at least one letter.",
+            });
+        }
+
+        if (!/[0-9]/.test(password)) {
+            return res.status(400).json({
+                success: false,
+                message:
+                    "Password must contain at least one number.",
+            });
+        }
+
+        // --------------------------------------
+        // Check existing email
+        // --------------------------------------
+
+        const [existingUsers] = await db.execute(
+            `
+            SELECT id
+            FROM users
+            WHERE email = ?
+            LIMIT 1
+            `,
+            [cleanEmail]
+        );
+
+        if (existingUsers.length > 0) {
+            return res.status(409).json({
+                success: false,
+                message:
+                    "An account with this email already exists.",
+            });
+        }
+
+        // --------------------------------------
+        // Secure password hash
+        // --------------------------------------
+
+        const passwordHash =
+            await hashPassword(password);
+
+        // --------------------------------------
+        // Create user
+        // --------------------------------------
+
+        const [result] = await db.execute(
+            `
+            INSERT INTO users
+            (
+                first_name,
+                last_name,
+                email,
+                password_hash,
+                email_verified_at,
+                status
+            )
+            VALUES (?, ?, ?, ?, NULL, 'active')
+            `,
+            [
+                cleanFirstName,
+                cleanLastName,
+                cleanEmail,
+                passwordHash,
+            ]
+        );
+
+        // --------------------------------------
+        // Success response
+        // OTP will be connected next
+        // --------------------------------------
+
+        return res.status(201).json({
+            success: true,
+            message:
+                "Account created successfully. Email verification is required.",
+            user: {
+                id: result.insertId,
+                firstName: cleanFirstName,
+                lastName: cleanLastName,
+                email: cleanEmail,
+            },
+            requiresEmailVerification: true,
+        });
+    } catch (error) {
+        console.error("Signup error:", error);
+
+        // Race-condition duplicate protection
+        if (error.code === "ER_DUP_ENTRY") {
+            return res.status(409).json({
+                success: false,
+                message:
+                    "An account with this email already exists.",
+            });
+        }
+
+        return res.status(500).json({
+            success: false,
+            message:
+                "Unable to create your account right now.",
         });
     }
 };
