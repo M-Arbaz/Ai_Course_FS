@@ -477,10 +477,227 @@ export const submitAiAssessment = async (req, res) => {
             aiLevel = "AI Power User";
         }
 
-        // Course recommendation mapping
-        // Next step mein actual DB course slugs connect karenge.
-        const recommendedCourses = [];
+        // ==========================================
+        // SMART COURSE RECOMMENDATIONS
+        // ==========================================
 
+        const [courses] = await db.execute(`
+  SELECT
+    id,
+    slug,
+    title,
+    type,
+    duration,
+    level,
+    description,
+    theme,
+    sort_order
+  FROM courses
+  WHERE is_active = 1
+  ORDER BY sort_order ASC, id ASC
+`);
+
+        const interest = String(answers.interest || "").toLowerCase();
+        const goal = String(answers.goal || "").toLowerCase();
+
+        const interestKeywords = {
+            "content-productivity": [
+                "writing",
+                "business",
+                "chatbot",
+                "marketing"
+            ],
+
+            "image-design": [
+                "graphic",
+                "design",
+                "image"
+            ],
+
+            "video": [
+                "video"
+            ],
+
+            "coding": [
+                "coding",
+                "software",
+                "development"
+            ],
+
+            "marketing": [
+                "marketing",
+                "seo",
+                "sales"
+            ],
+
+            "data-research": [
+                "data",
+                "analytics",
+                "research"
+            ],
+
+            "business-automation": [
+                "business",
+                "sales",
+                "chatbot",
+                "automation"
+            ]
+        };
+
+        const goalKeywords = {
+            "job-skills": [
+                "coding",
+                "data",
+                "business",
+                "marketing"
+            ],
+
+            "freelancing": [
+                "graphic",
+                "video",
+                "writing",
+                "coding",
+                "marketing"
+            ],
+
+            "business": [
+                "business",
+                "sales",
+                "marketing",
+                "chatbot"
+            ],
+
+            "content-creation": [
+                "writing",
+                "graphic",
+                "video",
+                "marketing"
+            ],
+
+            "study": [
+                "chatbot",
+                "data",
+                "writing"
+            ],
+
+            "productivity": [
+                "business",
+                "chatbot",
+                "writing"
+            ]
+        };
+
+        const scoredCourses = courses.map((course) => {
+            let recommendationScore = 0;
+
+            const searchableText = `
+    ${course.title || ""}
+    ${course.type || ""}
+    ${course.level || ""}
+    ${course.description || ""}
+    ${course.slug || ""}
+  `.toLowerCase();
+
+            // --------------------------------------
+            // Interest matching
+            // --------------------------------------
+
+            const selectedInterestKeywords =
+                interestKeywords[interest] || [];
+
+            selectedInterestKeywords.forEach((keyword) => {
+                if (searchableText.includes(keyword)) {
+                    recommendationScore += 25;
+                }
+            });
+
+            // --------------------------------------
+            // Goal matching
+            // --------------------------------------
+
+            const selectedGoalKeywords =
+                goalKeywords[goal] || [];
+
+            selectedGoalKeywords.forEach((keyword) => {
+                if (searchableText.includes(keyword)) {
+                    recommendationScore += 15;
+                }
+            });
+
+            // --------------------------------------
+            // AI level matching
+            // --------------------------------------
+
+            const levelText = String(course.level || "").toLowerCase();
+
+            if (score <= 30) {
+                if (levelText.includes("beginner")) {
+                    recommendationScore += 20;
+                }
+
+                // Complete beginner programs get priority
+                if (
+                    course.slug === "28-days-ai-challenge" ||
+                    course.slug === "15-ai-tools-program"
+                ) {
+                    recommendationScore += 30;
+                }
+            }
+
+            if (score > 30 && score <= 55) {
+                if (levelText.includes("beginner")) {
+                    recommendationScore += 15;
+                }
+
+                if (course.slug === "15-ai-tools-program") {
+                    recommendationScore += 15;
+                }
+            }
+
+            if (score > 55 && score <= 75) {
+                if (
+                    levelText.includes("intermediate") ||
+                    levelText.includes("advanced")
+                ) {
+                    recommendationScore += 15;
+                }
+            }
+
+            if (score > 75) {
+                if (
+                    levelText.includes("advanced") ||
+                    levelText.includes("intermediate")
+                ) {
+                    recommendationScore += 20;
+                }
+            }
+
+            return {
+                ...course,
+                recommendationScore,
+            };
+        });
+
+        scoredCourses.sort((a, b) => {
+            if (b.recommendationScore !== a.recommendationScore) {
+                return b.recommendationScore - a.recommendationScore;
+            }
+
+            return (a.sort_order || 999) - (b.sort_order || 999);
+        });
+
+        const recommendedCourses = scoredCourses
+            .slice(0, 3)
+            .map((course) => ({
+                id: course.id,
+                slug: course.slug,
+                title: course.title,
+                type: course.type,
+                duration: course.duration,
+                level: course.level,
+                description: course.description,
+                theme: course.theme,
+            }));
         // -----------------------------
         // SAVE TO DATABASE
         // -----------------------------
