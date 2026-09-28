@@ -32,6 +32,7 @@ export default function Footer() {
                             <Link href="/">Home</Link>
                             <Link href="/courses">All Courses</Link>
                             <Link href="/#categories">Categories</Link>
+                            <Link href="/ai-readiness-test">Test Your AI Level</Link>
                         </div>
                     </div>
 

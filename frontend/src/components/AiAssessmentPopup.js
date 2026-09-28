@@ -4,9 +4,9 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import api from "../lib/api";
 
-// const COMPLETED_KEY = "aiAssessmentCompleted";
-// const SHOW_COUNT_KEY = "aiAssessmentShowCount";
-// const SESSION_SHOWN_KEY = "aiAssessmentShownThisSession";
+const COMPLETED_KEY = "aiAssessmentCompleted";
+const SHOW_COUNT_KEY = "aiAssessmentShowCount";
+const SESSION_SHOWN_KEY = "aiAssessmentShownThisSession";
 
 const questions = [
     {
