@@ -428,7 +428,6 @@ const initialAnswers = {
 
 export default function AiAssessmentPopup() {
     const [isOpen, setIsOpen] = useState(false);
-    const [autoPopupEnabled, setAutoPopupEnabled] = useState(false);
     const [screen, setScreen] = useState("intro");
     const [questionIndex, setQuestionIndex] = useState(0);
 
