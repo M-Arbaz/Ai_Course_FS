@@ -21,7 +21,6 @@ const initialSignup = {
 export default function LoginPage() {
     const router = useRouter();
     const googleButtonRef = useRef(null);
-    const clientid = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
     const [googleLoading, setGoogleLoading] =
         useState(false);
     const [mode, setMode] = useState("login");
@@ -803,7 +802,6 @@ export default function LoginPage() {
     return (
         <>
             <Navbar />
-            {clientid}
             <main
                 className="
                 min-h-screen
