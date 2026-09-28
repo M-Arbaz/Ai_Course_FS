@@ -11,14 +11,34 @@ const SESSION_SHOWN_KEY = "aiAssessmentShownThisSession";
 const questions = [
     {
         key: "usage",
-        title: "How often do you use AI tools?",
-        subtitle: "Think about tools like ChatGPT, Gemini, Claude or other AI apps.",
+        title: "How often do you currently use AI tools?",
+        subtitle: "Think about ChatGPT, Gemini, Claude and other AI tools.",
         type: "single",
         options: [
-            { value: "never", label: "Never", icon: "🌱", text: "I am just getting started" },
-            { value: "sometimes", label: "Sometimes", icon: "✨", text: "Only when I need them" },
-            { value: "weekly", label: "Every Week", icon: "🚀", text: "AI is part of my routine" },
-            { value: "daily", label: "Every Day", icon: "⚡", text: "I use AI regularly" },
+            {
+                value: "never",
+                label: "Never",
+                icon: "🌱",
+                text: "I am completely new to AI",
+            },
+            {
+                value: "sometimes",
+                label: "Sometimes",
+                icon: "✨",
+                text: "I use AI occasionally",
+            },
+            {
+                value: "weekly",
+                label: "Every Week",
+                icon: "🚀",
+                text: "AI is part of my weekly routine",
+            },
+            {
+                value: "daily",
+                label: "Every Day",
+                icon: "⚡",
+                text: "I rely on AI regularly",
+            },
         ],
     },
 
@@ -43,71 +63,348 @@ const questions = [
 
     {
         key: "confidence",
-        title: "How confident are you with AI?",
-        subtitle: "Choose the option that best describes you.",
+        title: "How confident are you when using AI?",
+        subtitle: "Choose the option that describes you best.",
         type: "single",
         options: [
-            { value: "beginner", label: "Beginner", icon: "🌱", text: "I need guidance" },
-            { value: "basic", label: "Basic", icon: "🙂", text: "I know the basics" },
-            { value: "comfortable", label: "Comfortable", icon: "🚀", text: "I can use AI independently" },
-            { value: "very-confident", label: "Very Confident", icon: "⚡", text: "AI is already part of my workflow" },
-        ],
-    },
-
-    {
-        key: "interest",
-        title: "What do you most want to learn with AI?",
-        subtitle: "We will use this to personalize your course recommendations.",
-        type: "single",
-        options: [
-            { value: "content-productivity", label: "Content & Productivity", icon: "✍️" },
-            { value: "image-design", label: "Images & Graphic Design", icon: "🎨" },
-            { value: "video", label: "AI Video Creation", icon: "🎬" },
-            { value: "coding", label: "Coding & Development", icon: "💻" },
-            { value: "marketing", label: "SEO & Marketing", icon: "📈" },
-            { value: "data-research", label: "Data & Research", icon: "📊" },
-            { value: "business-automation", label: "Business & Automation", icon: "⚙️" },
+            {
+                value: "beginner",
+                label: "Beginner",
+                icon: "🌱",
+                text: "I usually need help",
+            },
+            {
+                value: "basic",
+                label: "Basic",
+                icon: "🙂",
+                text: "I understand basic AI usage",
+            },
+            {
+                value: "comfortable",
+                label: "Comfortable",
+                icon: "🚀",
+                text: "I can use AI independently",
+            },
+            {
+                value: "very-confident",
+                label: "Very Confident",
+                icon: "⚡",
+                text: "AI is already part of my workflow",
+            },
         ],
     },
 
     {
         key: "prompting",
         title: "How good are you at writing AI prompts?",
-        subtitle: "A good prompt helps AI understand exactly what you need.",
+        subtitle: "Think about how clearly you instruct AI.",
         type: "single",
         options: [
-            { value: "no-idea", label: "No Idea Yet", icon: "🤔", text: "I normally just type a simple question" },
-            { value: "basic", label: "Basic", icon: "🌱", text: "I can write simple instructions" },
-            { value: "good", label: "Good", icon: "🚀", text: "I add context and clear instructions" },
-            { value: "advanced", label: "Advanced", icon: "⚡", text: "I build detailed reusable prompts" },
+            {
+                value: "no-idea",
+                label: "No Idea Yet",
+                icon: "🤔",
+                text: "I just type simple questions",
+            },
+            {
+                value: "basic",
+                label: "Basic",
+                icon: "🌱",
+                text: "I give simple instructions",
+            },
+            {
+                value: "good",
+                label: "Good",
+                icon: "🚀",
+                text: "I add context and clear requirements",
+            },
+            {
+                value: "advanced",
+                label: "Advanced",
+                icon: "⚡",
+                text: "I create detailed reusable prompts",
+            },
+        ],
+    },
+
+    {
+        key: "contextSkill",
+        title: "When AI gives a weak answer, what do you usually do?",
+        subtitle: "This tells us how well you refine AI responses.",
+        type: "single",
+        options: [
+            {
+                value: "give-up",
+                label: "I Usually Give Up",
+                icon: "😕",
+                text: "I am not sure how to improve the result",
+            },
+            {
+                value: "rewrite",
+                label: "Rewrite My Question",
+                icon: "✏️",
+                text: "I try asking it differently",
+            },
+            {
+                value: "add-context",
+                label: "Add More Context",
+                icon: "🧠",
+                text: "I explain the task in more detail",
+            },
+            {
+                value: "iterate",
+                label: "Iterate & Refine",
+                icon: "🎯",
+                text: "I systematically improve the prompt",
+            },
+        ],
+    },
+
+    {
+        key: "verification",
+        title: "Do you verify information generated by AI?",
+        subtitle: "AI can make mistakes, so verification is an important skill.",
+        type: "single",
+        options: [
+            {
+                value: "never",
+                label: "Never",
+                icon: "🙈",
+                text: "I usually trust the answer",
+            },
+            {
+                value: "rarely",
+                label: "Rarely",
+                icon: "🤷",
+                text: "Only when something looks wrong",
+            },
+            {
+                value: "sometimes",
+                label: "Sometimes",
+                icon: "🔎",
+                text: "For important information",
+            },
+            {
+                value: "always",
+                label: "Always",
+                icon: "✅",
+                text: "I check important facts and sources",
+            },
+        ],
+    },
+
+    {
+        key: "creativeAI",
+        title: "How experienced are you with AI image or video tools?",
+        subtitle: "For example Canva AI, Midjourney, Ideogram, Sora or Runway.",
+        type: "single",
+        options: [
+            {
+                value: "none",
+                label: "Never Used Them",
+                icon: "🌱",
+                text: "This is new for me",
+            },
+            {
+                value: "tried",
+                label: "I Have Tried Them",
+                icon: "🎨",
+                text: "Only basic experiments",
+            },
+            {
+                value: "regular",
+                label: "I Use Them Regularly",
+                icon: "🖼️",
+                text: "I create visuals or videos",
+            },
+            {
+                value: "advanced",
+                label: "Advanced User",
+                icon: "🎬",
+                text: "I create professional AI content",
+            },
+        ],
+    },
+
+    {
+        key: "codingAI",
+        title: "Have you used AI for coding or technical work?",
+        subtitle: "This includes Cursor, Copilot, ChatGPT coding and similar tools.",
+        type: "single",
+        options: [
+            {
+                value: "never",
+                label: "Never",
+                icon: "🌱",
+                text: "I haven't used AI for coding",
+            },
+            {
+                value: "basic",
+                label: "Basic Help",
+                icon: "💡",
+                text: "Small code questions or fixes",
+            },
+            {
+                value: "projects",
+                label: "Projects",
+                icon: "💻",
+                text: "I have built things with AI assistance",
+            },
+            {
+                value: "advanced",
+                label: "Advanced",
+                icon: "⚡",
+                text: "AI is part of my development workflow",
+            },
+        ],
+    },
+
+    {
+        key: "automationAI",
+        title: "Have you automated any work using AI?",
+        subtitle: "For example repetitive tasks, workflows or business processes.",
+        type: "single",
+        options: [
+            {
+                value: "never",
+                label: "Never",
+                icon: "🌱",
+                text: "I do everything manually",
+            },
+            {
+                value: "interested",
+                label: "Interested",
+                icon: "🤔",
+                text: "I want to learn automation",
+            },
+            {
+                value: "simple",
+                label: "Simple Automations",
+                icon: "⚙️",
+                text: "I have automated small tasks",
+            },
+            {
+                value: "advanced",
+                label: "Advanced Workflows",
+                icon: "🚀",
+                text: "I build multi-step automations",
+            },
         ],
     },
 
     {
         key: "projects",
-        title: "Have you completed a project using AI?",
-        subtitle: "This helps us understand your practical experience.",
+        title: "Have you completed a real project using AI?",
+        subtitle: "Think about work, study, freelancing or personal projects.",
         type: "single",
         options: [
-            { value: "never", label: "Not Yet", icon: "🌱", text: "I haven't completed one yet" },
-            { value: "small-tasks", label: "Small Tasks", icon: "✨", text: "I use AI for individual tasks" },
-            { value: "complete-projects", label: "Complete Projects", icon: "🚀", text: "I have built full projects with AI" },
-            { value: "automated-workflows", label: "Automated Workflows", icon: "⚡", text: "I automate multi-step work" },
+            {
+                value: "never",
+                label: "Not Yet",
+                icon: "🌱",
+                text: "I haven't completed one",
+            },
+            {
+                value: "small-tasks",
+                label: "Small Tasks",
+                icon: "✨",
+                text: "I use AI for individual tasks",
+            },
+            {
+                value: "complete-projects",
+                label: "Complete Projects",
+                icon: "🚀",
+                text: "I have completed full projects",
+            },
+            {
+                value: "automated-workflows",
+                label: "AI Workflows",
+                icon: "⚡",
+                text: "I build advanced AI workflows",
+            },
+        ],
+    },
+
+    {
+        key: "interest",
+        title: "What would you most like to learn with AI?",
+        subtitle: "We use this to personalize your course recommendations.",
+        type: "single",
+        options: [
+            {
+                value: "content-productivity",
+                label: "Content & Productivity",
+                icon: "✍️",
+            },
+            {
+                value: "image-design",
+                label: "Images & Graphic Design",
+                icon: "🎨",
+            },
+            {
+                value: "video",
+                label: "AI Video Creation",
+                icon: "🎬",
+            },
+            {
+                value: "coding",
+                label: "Coding & Development",
+                icon: "💻",
+            },
+            {
+                value: "marketing",
+                label: "SEO & Marketing",
+                icon: "📈",
+            },
+            {
+                value: "data-research",
+                label: "Data & Research",
+                icon: "📊",
+            },
+            {
+                value: "business-automation",
+                label: "Business & Automation",
+                icon: "⚙️",
+            },
         ],
     },
 
     {
         key: "goal",
         title: "What is your main goal with AI?",
-        subtitle: "One last question before we calculate your AI level.",
+        subtitle: "Last question — then we'll calculate your AI level.",
         type: "single",
         options: [
-            { value: "job-skills", label: "Improve Job Skills", icon: "💼" },
-            { value: "freelancing", label: "Start / Grow Freelancing", icon: "🌍" },
-            { value: "business", label: "Grow My Business", icon: "📈" },
-            { value: "content-creation", label: "Create Better Content", icon: "🎥" },
-            { value: "study", label: "Study & Research", icon: "📚" },
-            { value: "productivity", label: "Save Time & Be Productive", icon: "⚡" },
+            {
+                value: "job-skills",
+                label: "Improve Job Skills",
+                icon: "💼",
+            },
+            {
+                value: "freelancing",
+                label: "Start / Grow Freelancing",
+                icon: "🌍",
+            },
+            {
+                value: "business",
+                label: "Grow My Business",
+                icon: "📈",
+            },
+            {
+                value: "content-creation",
+                label: "Create Better Content",
+                icon: "🎥",
+            },
+            {
+                value: "study",
+                label: "Study & Research",
+                icon: "📚",
+            },
+            {
+                value: "productivity",
+                label: "Save Time & Be Productive",
+                icon: "⚡",
+            },
         ],
     },
 ];
@@ -116,9 +413,14 @@ const initialAnswers = {
     usage: "",
     toolsUsed: [],
     confidence: "",
-    interest: "",
     prompting: "",
+    contextSkill: "",
+    verification: "",
+    creativeAI: "",
+    codingAI: "",
+    automationAI: "",
     projects: "",
+    interest: "",
     goal: "",
 };
 
@@ -336,7 +638,7 @@ export default function AiAssessmentPopup() {
                         "Content-Type": "application/json",
                     },
                     body: JSON.stringify({
-                        name: name.trim(),
+                        name: name.trim() || "User",
                         email: cleanEmail,
                         answers,
                     }),
@@ -380,8 +682,7 @@ export default function AiAssessmentPopup() {
             aria-modal="true"
             aria-label="AI Readiness Test"
         >
-            <div className="relative max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-[30px] border border-purple-100 bg-white shadow-2xl">
-
+            <div className="relative max-h-[calc(100dvh-24px)] w-full max-w-2xl overflow-x-hidden overflow-y-auto rounded-[30px] border border-purple-100 bg-white shadow-2xl [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                 {/* decorative backgrounds */}
 
                 <div className="pointer-events-none absolute -left-20 -top-20 h-52 w-52 rounded-full bg-purple-200/40 blur-3xl" />
@@ -525,8 +826,8 @@ export default function AiAssessmentPopup() {
                                                     : selectSingleOption(option.value)
                                             }
                                             className={`relative flex min-h-[92px] items-center gap-4 rounded-[20px] border-2 p-4 text-left transition ${selected
-                                                    ? "border-purple-500 bg-purple-50 shadow-sm"
-                                                    : "border-slate-100 bg-white hover:border-purple-200 hover:bg-purple-50/40"
+                                                ? "border-purple-500 bg-purple-50 shadow-sm"
+                                                : "border-slate-100 bg-white hover:border-purple-200 hover:bg-purple-50/40"
                                                 }`}
                                         >
 

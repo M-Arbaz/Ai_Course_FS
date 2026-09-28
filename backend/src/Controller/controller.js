@@ -406,61 +406,110 @@ export const submitAiAssessment = async (req, res) => {
 
         let rawScore = 0;
 
-        // Q1: AI usage
+        // Q1 - Usage
         const usageScores = {
             never: 0,
-            sometimes: 5,
-            weekly: 10,
-            daily: 15,
+            sometimes: 3,
+            weekly: 7,
+            daily: 10,
         };
 
         rawScore += usageScores[answers.usage] || 0;
 
-        // Q2: Number of AI tools already used
+        // Q2 - Tools used
         if (Array.isArray(answers.toolsUsed)) {
             const realTools = answers.toolsUsed.filter(
                 (tool) => tool && tool !== "none"
             );
 
-            rawScore += Math.min(realTools.length * 3, 15);
+            rawScore += Math.min(realTools.length * 2, 10);
         }
 
-        // Q3: Confidence
+        // Q3 - Confidence
         const confidenceScores = {
-            beginner: 2,
-            basic: 5,
-            comfortable: 10,
-            "very-confident": 15,
+            beginner: 0,
+            basic: 4,
+            comfortable: 7,
+            "very-confident": 10,
         };
 
         rawScore += confidenceScores[answers.confidence] || 0;
 
-        // Q5: Prompting knowledge
+        // Q4 - Prompting
         const promptingScores = {
             "no-idea": 0,
-            basic: 5,
-            good: 10,
-            advanced: 15,
+            basic: 4,
+            good: 8,
+            advanced: 12,
         };
 
         rawScore += promptingScores[answers.prompting] || 0;
 
-        // Q6: Project / workflow experience
+        // Q5 - Refining / Context
+        const contextScores = {
+            "give-up": 0,
+            rewrite: 3,
+            "add-context": 7,
+            iterate: 10,
+        };
+
+        rawScore += contextScores[answers.contextSkill] || 0;
+
+        // Q6 - Verification
+        const verificationScores = {
+            never: 0,
+            rarely: 3,
+            sometimes: 6,
+            always: 10,
+        };
+
+        rawScore += verificationScores[answers.verification] || 0;
+
+        // Q7 - Creative AI
+        const creativeScores = {
+            none: 0,
+            tried: 3,
+            regular: 7,
+            advanced: 10,
+        };
+
+        rawScore += creativeScores[answers.creativeAI] || 0;
+
+        // Q8 - Coding AI
+        const codingScores = {
+            never: 0,
+            basic: 3,
+            projects: 7,
+            advanced: 10,
+        };
+
+        rawScore += codingScores[answers.codingAI] || 0;
+
+        // Q9 - Automation
+        const automationScores = {
+            never: 0,
+            interested: 2,
+            simple: 6,
+            advanced: 10,
+        };
+
+        rawScore += automationScores[answers.automationAI] || 0;
+
+        // Q10 - Projects
         const projectScores = {
             never: 0,
-            "small-tasks": 8,
-            "complete-projects": 14,
-            "automated-workflows": 20,
+            "small-tasks": 4,
+            "complete-projects": 9,
+            "automated-workflows": 13,
         };
 
         rawScore += projectScores[answers.projects] || 0;
 
-        // Maximum raw score = 80
+        // Max raw score = 105
         const score = Math.min(
             100,
-            Math.round((rawScore / 80) * 100)
+            Math.round((rawScore / 105) * 100)
         );
-
         // -----------------------------
         // LEVEL
         // -----------------------------
