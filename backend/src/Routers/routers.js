@@ -17,6 +17,7 @@ import {
     forgotPassword,
     verifyResetOtp,
     resetPassword,
+    googleLogin,
 } from "../Controller/controller.js";
 import db from "../DB/db.js";
 const router = express.Router();
@@ -80,4 +81,10 @@ router.post(
     "/auth/reset-password",
     resetPassword
 );
+
+router.post(
+    "/auth/google",
+    googleLogin
+);
+
 export default router;

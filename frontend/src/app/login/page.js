@@ -1,6 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import {
+    useEffect,
+    useRef,
+    useState,
+} from "react";
 import { useRouter } from "next/navigation";
 import api from "../../lib/api";
 import Navbar from "@/components/Navbar";
@@ -16,7 +20,10 @@ const initialSignup = {
 
 export default function LoginPage() {
     const router = useRouter();
+    const googleButtonRef = useRef(null);
 
+    const [googleLoading, setGoogleLoading] =
+        useState(false);
     const [mode, setMode] = useState("login");
 
     const [loginEmail, setLoginEmail] = useState("");
@@ -58,6 +65,166 @@ export default function LoginPage() {
             return {};
         }
     };
+    const handleGoogleCredential = async (
+        googleResponse
+    ) => {
+        clearMessages();
+
+        const credential =
+            googleResponse?.credential;
+
+        if (!credential) {
+            setError(
+                "Google Sign-In did not return a credential."
+            );
+            return;
+        }
+
+        try {
+            setGoogleLoading(true);
+
+            const response = await fetch(
+                `${api()}/api/auth/google`,
+                {
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type":
+                            "application/json",
+                    },
+
+                    credentials: "include",
+
+                    body: JSON.stringify({
+                        credential,
+                    }),
+                }
+            );
+
+            const data =
+                await readResponse(response);
+
+            if (!response.ok) {
+                setError(
+                    data?.message ||
+                    "Google Sign-In failed."
+                );
+                return;
+            }
+
+            setSuccess(
+                data?.message ||
+                "Signed in with Google successfully."
+            );
+
+            router.push("/");
+            router.refresh();
+        } catch (error) {
+            console.error(
+                "Google Sign-In error:",
+                error
+            );
+
+            setError(
+                "Unable to sign in with Google."
+            );
+        } finally {
+            setGoogleLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        const clientId =
+            process.env
+                .NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+
+        if (!clientId) {
+            console.error(
+                "NEXT_PUBLIC_GOOGLE_CLIENT_ID is missing."
+            );
+            return;
+        }
+
+        const renderGoogleButton = () => {
+            if (
+                !window.google ||
+                !googleButtonRef.current
+            ) {
+                return;
+            }
+
+            window.google.accounts.id.initialize({
+                client_id: clientId,
+                callback:
+                    handleGoogleCredential,
+                ux_mode: "popup",
+            });
+
+            googleButtonRef.current.innerHTML =
+                "";
+
+            window.google.accounts.id.renderButton(
+                googleButtonRef.current,
+                {
+                    type: "standard",
+                    theme: "outline",
+                    size: "large",
+
+                    text:
+                        mode === "signup"
+                            ? "signup_with"
+                            : "continue_with",
+
+                    shape: "rectangular",
+
+                    width: 400,
+                }
+            );
+        };
+
+        if (window.google) {
+            renderGoogleButton();
+            return;
+        }
+
+        const existingScript =
+            document.querySelector(
+                'script[src="https://accounts.google.com/gsi/client"]'
+            );
+
+        if (existingScript) {
+            existingScript.addEventListener(
+                "load",
+                renderGoogleButton
+            );
+
+            return () => {
+                existingScript.removeEventListener(
+                    "load",
+                    renderGoogleButton
+                );
+            };
+        }
+
+        const script =
+            document.createElement("script");
+
+        script.src =
+            "https://accounts.google.com/gsi/client";
+
+        script.async = true;
+        script.defer = true;
+
+        script.onload =
+            renderGoogleButton;
+
+        document.head.appendChild(script);
+
+        return () => {
+            script.onload = null;
+        };
+    }, [mode]);
+
 
     // =====================================================
     // LOGIN
@@ -821,7 +988,10 @@ export default function LoginPage() {
 
                                     <GoogleDivider />
 
-                                    <GoogleButton />
+                                    <GoogleButton
+                                        buttonRef={googleButtonRef}
+                                        loading={googleLoading}
+                                    />
 
                                     <p
                                         className="
@@ -990,7 +1160,10 @@ export default function LoginPage() {
 
                                     <GoogleDivider />
 
-                                    <GoogleButton />
+                                    <GoogleButton
+                                        buttonRef={googleButtonRef}
+                                        loading={googleLoading}
+                                    />
 
                                     <p
                                         className="
@@ -1416,46 +1589,37 @@ function GoogleDivider() {
     );
 }
 
-function GoogleButton() {
+function GoogleButton({
+    buttonRef,
+    loading,
+}) {
     return (
-        <button
-            type="button"
-            disabled
-            title="Google Sign-In will be connected next"
-            className="
-                flex
-                w-full
-                items-center
-                justify-center
-                gap-3
-                rounded-xl
-                border
-                border-gray-200
-                bg-white
-                px-5
-                py-3.5
-                font-semibold
-                text-[#21172f]
-                opacity-70
-            "
-        >
-            <span
+        <div>
+            <div
+                ref={buttonRef}
                 className="
                     flex
-                    h-6
-                    w-6
+                    min-h-[44px]
+                    w-full
                     items-center
                     justify-center
-                    rounded-full
-                    bg-[#DBEAFE]
-                    text-sm
-                    font-bold
+                    overflow-hidden
+                    rounded-xl
                 "
-            >
-                G
-            </span>
+            />
 
-            Continue with Google
-        </button>
+            {loading && (
+                <p
+                    className="
+                        mt-2
+                        text-center
+                        text-xs
+                        text-gray-400
+                    "
+                >
+                    Connecting to Google...
+                </p>
+            )}
+        </div>
     );
 }

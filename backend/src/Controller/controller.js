@@ -13,11 +13,13 @@ import {
     timingSafeEqual,
     scrypt as scryptCallback,
 } from "node:crypto";
-
+import { OAuth2Client } from "google-auth-library";
 import { promisify } from "node:util";
 
 const scrypt = promisify(scryptCallback);
-
+const googleClient = new OAuth2Client(
+    process.env.GOOGLE_CLIENT_ID
+);
 const OTP_PURPOSE =
     "email_verification";
 const PASSWORD_RESET_PURPOSE =
@@ -3529,3 +3531,318 @@ export const resetPassword =
                 });
         }
     };
+
+// ==========================================
+// AUTH - GOOGLE LOGIN
+// ==========================================
+
+export const googleLogin = async (req, res) => {
+    try {
+        const { credential } = req.body;
+
+        if (!credential) {
+            return res.status(400).json({
+                success: false,
+                message: "Google credential is required.",
+            });
+        }
+
+        if (!process.env.GOOGLE_CLIENT_ID) {
+            console.error(
+                "GOOGLE_CLIENT_ID is not configured."
+            );
+
+            return res.status(500).json({
+                success: false,
+                message:
+                    "Google Sign-In is not configured.",
+            });
+        }
+
+        // ----------------------------------
+        // Verify Google ID token
+        // ----------------------------------
+
+        const ticket =
+            await googleClient.verifyIdToken({
+                idToken: credential,
+                audience:
+                    process.env.GOOGLE_CLIENT_ID,
+            });
+
+        const payload =
+            ticket.getPayload();
+
+        if (!payload) {
+            return res.status(401).json({
+                success: false,
+                message:
+                    "Invalid Google credential.",
+            });
+        }
+
+        const googleSub =
+            String(payload.sub || "").trim();
+
+        const cleanEmail =
+            String(payload.email || "")
+                .trim()
+                .toLowerCase();
+
+        const emailVerified =
+            Boolean(payload.email_verified);
+
+        const firstName =
+            String(
+                payload.given_name || ""
+            ).trim() || "Google";
+
+        const lastName =
+            String(
+                payload.family_name || ""
+            ).trim() || "User";
+
+        if (
+            !googleSub ||
+            !cleanEmail ||
+            !emailVerified
+        ) {
+            return res.status(401).json({
+                success: false,
+                message:
+                    "Unable to verify your Google account.",
+            });
+        }
+
+        // ----------------------------------
+        // First: find existing Google account
+        // ----------------------------------
+
+        const [googleUsers] =
+            await db.execute(
+                `
+                SELECT
+                    id,
+                    first_name,
+                    last_name,
+                    email,
+                    google_sub,
+                    email_verified_at,
+                    status
+                FROM users
+                WHERE google_sub = ?
+                LIMIT 1
+                `,
+                [googleSub]
+            );
+
+        let user = null;
+
+        if (googleUsers.length > 0) {
+            user = googleUsers[0];
+        } else {
+            // ----------------------------------
+            // Check same email
+            // ----------------------------------
+
+            const [emailUsers] =
+                await db.execute(
+                    `
+                    SELECT
+                        id,
+                        first_name,
+                        last_name,
+                        email,
+                        google_sub,
+                        password_hash,
+                        email_verified_at,
+                        status
+                    FROM users
+                    WHERE email = ?
+                    LIMIT 1
+                    `,
+                    [cleanEmail]
+                );
+
+            if (emailUsers.length > 0) {
+                const existingUser =
+                    emailUsers[0];
+
+                /*
+                 * Don't automatically connect
+                 * an existing password account
+                 * with Google.
+                 */
+                if (!existingUser.google_sub) {
+                    return res.status(409).json({
+                        success: false,
+                        code:
+                            "ACCOUNT_LINK_REQUIRED",
+                        message:
+                            "An account with this email already exists. Please sign in with your password first.",
+                    });
+                }
+
+                user = existingUser;
+            } else {
+                // ----------------------------------
+                // Create new Google user
+                // ----------------------------------
+
+                const [result] =
+                    await db.execute(
+                        `
+                        INSERT INTO users
+                        (
+                            first_name,
+                            last_name,
+                            email,
+                            password_hash,
+                            google_sub,
+                            email_verified_at,
+                            status
+                        )
+                        VALUES
+                        (
+                            ?,
+                            ?,
+                            ?,
+                            NULL,
+                            ?,
+                            CURRENT_TIMESTAMP,
+                            'active'
+                        )
+                        `,
+                        [
+                            firstName,
+                            lastName,
+                            cleanEmail,
+                            googleSub,
+                        ]
+                    );
+
+                user = {
+                    id: result.insertId,
+                    first_name: firstName,
+                    last_name: lastName,
+                    email: cleanEmail,
+                    google_sub: googleSub,
+                    email_verified_at:
+                        new Date(),
+                    status: "active",
+                };
+            }
+        }
+
+        // ----------------------------------
+        // Block disabled users
+        // ----------------------------------
+
+        if (user.status !== "active") {
+            return res.status(403).json({
+                success: false,
+                message:
+                    "This account is currently unavailable.",
+            });
+        }
+
+        // ----------------------------------
+        // Create our own secure session
+        // ----------------------------------
+
+        const sessionToken =
+            randomBytes(32).toString("hex");
+
+        const tokenHash =
+            hashSessionToken(
+                sessionToken
+            );
+
+        const expiresAt =
+            new Date(
+                Date.now() +
+                SESSION_DAYS *
+                24 *
+                60 *
+                60 *
+                1000
+            );
+
+        await db.execute(
+            `
+            INSERT INTO auth_sessions
+            (
+                user_id,
+                token_hash,
+                ip_address,
+                user_agent,
+                expires_at,
+                last_seen_at
+            )
+            VALUES (?, ?, ?, ?, ?, NOW())
+            `,
+            [
+                user.id,
+                tokenHash,
+                req.ip || null,
+                req.get("user-agent") ||
+                null,
+                expiresAt,
+            ]
+        );
+
+        // ----------------------------------
+        // Update login info
+        // ----------------------------------
+
+        await db.execute(
+            `
+            UPDATE users
+            SET
+                last_login_at =
+                    CURRENT_TIMESTAMP,
+                failed_login_attempts = 0,
+                locked_until = NULL
+            WHERE id = ?
+            `,
+            [user.id]
+        );
+
+        // ----------------------------------
+        // Set secure auth cookie
+        // ----------------------------------
+
+        res.cookie(
+            SESSION_COOKIE_NAME,
+            sessionToken,
+            getSessionCookieOptions()
+        );
+
+        return res.status(200).json({
+            success: true,
+            message:
+                "Signed in with Google successfully.",
+
+            user: {
+                id: user.id,
+                firstName:
+                    user.first_name,
+                lastName:
+                    user.last_name,
+                email:
+                    user.email,
+            },
+        });
+    } catch (error) {
+        console.error(
+            "Google login error:",
+            error
+        );
+
+        return res.status(401).json({
+            success: false,
+            message:
+                "Google Sign-In failed. Please try again.",
+        });
+    }
+};
