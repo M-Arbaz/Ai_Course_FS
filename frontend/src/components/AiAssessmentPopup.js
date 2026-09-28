@@ -5,9 +5,11 @@ import Link from "next/link";
 import api from "../lib/api";
 
 const COMPLETED_KEY = "aiAssessmentCompleted";
-const SHOW_COUNT_KEY = "aiAssessmentShowCount";
-const SESSION_SHOWN_KEY = "aiAssessmentShownThisSession";
+const AUTO_POPUP_COUNT_KEY = "aiAssessmentAutoPopupCount";
+const ASSESSMENT_COMPLETED_KEY = "aiAssessmentCompleted";
+const AUTO_POPUP_SESSION_KEY = "aiAssessmentAutoShownThisSession";
 
+const MAX_AUTO_POPUP_VIEWS = 5;
 const questions = [
     {
         key: "usage",
@@ -426,6 +428,7 @@ const initialAnswers = {
 
 export default function AiAssessmentPopup() {
     const [isOpen, setIsOpen] = useState(false);
+    const [autoPopupEnabled, setAutoPopupEnabled] = useState(false);
     const [screen, setScreen] = useState("intro");
     const [questionIndex, setQuestionIndex] = useState(0);
 
@@ -438,66 +441,70 @@ export default function AiAssessmentPopup() {
     const [error, setError] = useState("");
     const [result, setResult] = useState(null);
 
-    // -----------------------------------------
-    // SHOW AFTER 2% SCROLL
-    // Max 5 appearances
-    // Never show again after successful test
-    // Only once in the same browser session
-    // -----------------------------------------
+    useEffect(() => {
+        const completed =
+            localStorage.getItem(ASSESSMENT_COMPLETED_KEY) === "true";
 
-    // useEffect(() => {
-    //     const completed =
-    //         localStorage.getItem(COMPLETED_KEY) === "true";
+        const autoPopupCount = Number(
+            localStorage.getItem(AUTO_POPUP_COUNT_KEY) || 0
+        );
 
-    //     const alreadyShownThisSession =
-    //         sessionStorage.getItem(SESSION_SHOWN_KEY) === "true";
+        const shownThisSession =
+            sessionStorage.getItem(AUTO_POPUP_SESSION_KEY) === "true";
 
-    //     const currentShowCount =
-    //         Number(localStorage.getItem(SHOW_COUNT_KEY) || 0);
+        // Auto popup OFF if:
+        // 1. Assessment completed
+        // 2. Already shown 5 times
+        // 3. Already auto-shown in current session
+        if (
+            completed ||
+            autoPopupCount >= MAX_AUTO_POPUP_VIEWS ||
+            shownThisSession
+        ) {
+            return;
+        }
 
-    //     if (completed || alreadyShownThisSession || currentShowCount >= 5) {
-    //         return;
-    //     }
+        const handleScroll = () => {
+            const totalScrollableHeight =
+                document.documentElement.scrollHeight - window.innerHeight;
 
-    //     const handleScroll = () => {
-    //         const documentHeight =
-    //             document.documentElement.scrollHeight - window.innerHeight;
+            if (totalScrollableHeight <= 0) {
+                return;
+            }
 
-    //         if (documentHeight <= 0) {
-    //             return;
-    //         }
+            const scrollPercentage =
+                (window.scrollY / totalScrollableHeight) * 100;
 
-    //         const scrollPercent =
-    //             (window.scrollY / documentHeight) * 100;
+            if (scrollPercentage < 2) {
+                return;
+            }
 
-    //         if (scrollPercent >= 2) {
-    //             setIsOpen(true);
+            // Open automatic popup
+            setIsOpen(true);
 
-    //             sessionStorage.setItem(
-    //                 SESSION_SHOWN_KEY,
-    //                 "true"
-    //             );
+            // Count ONLY automatic popup appearances
+            localStorage.setItem(
+                AUTO_POPUP_COUNT_KEY,
+                String(autoPopupCount + 1)
+            );
 
-    //             localStorage.setItem(
-    //                 SHOW_COUNT_KEY,
-    //                 String(currentShowCount + 1)
-    //             );
+            // Don't auto-show again in same session
+            sessionStorage.setItem(
+                AUTO_POPUP_SESSION_KEY,
+                "true"
+            );
 
-    //             window.removeEventListener("scroll", handleScroll);
-    //         }
-    //     };
+            window.removeEventListener("scroll", handleScroll);
+        };
 
-    //     window.addEventListener("scroll", handleScroll, {
-    //         passive: true,
-    //     });
+        window.addEventListener("scroll", handleScroll, {
+            passive: true,
+        });
 
-    //     handleScroll();
-
-    //     return () => {
-    //         window.removeEventListener("scroll", handleScroll);
-    //     };
-    // }, []);
-
+        return () => {
+            window.removeEventListener("scroll", handleScroll);
+        };
+    }, []);
     // -----------------------------------------
     // ESC + body scroll lock
     // -----------------------------------------
@@ -655,7 +662,10 @@ export default function AiAssessmentPopup() {
 
             setResult(data);
             setScreen("result");
-
+            localStorage.setItem(
+                ASSESSMENT_COMPLETED_KEY,
+                "true"
+            );
             // Assessment successfully completed.
             // Never show popup again on this browser.
             localStorage.setItem(COMPLETED_KEY, "true");
