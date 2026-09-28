@@ -56,10 +56,10 @@ export default function Navbar() {
 
                     {/* CTA */}
                     <Link
-                        href="/courses"
+                        href="/login"
                         className="inline-flex items-center rounded-full bg-[#a3e635] px-5 py-2.5 text-sm font-bold text-[#243300] shadow-sm transition hover:-translate-y-0.5 hover:bg-[#b7ef59]"
                     >
-                        Explore Courses
+                        Login / Signup
                     </Link>
                 </div>
 
@@ -100,11 +100,11 @@ export default function Navbar() {
                             <WebsiteTranslator />
                         </div>
                         <Link
-                            href="/courses"
+                            href="/login"
                             onClick={() => setOpen(false)}
                             className="mt-2 rounded-xl bg-[#a3e635] px-5 py-3 text-center font-bold text-[#263800]"
                         >
-                            Explore Courses
+                            Login / Signup
                         </Link>
                     </div>
                 </div>
