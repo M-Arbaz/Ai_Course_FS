@@ -671,9 +671,9 @@ export default function AiAssessmentPopup() {
         }
     };
 
-    if (!isOpen) {
-        return null;
-    }
+    // if (!isOpen) {
+    //     return null;
+    // }
 
     return (
         <>
