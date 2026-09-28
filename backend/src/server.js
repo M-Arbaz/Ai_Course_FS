@@ -6,7 +6,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 
 const app = express();
-
+app.set("trust proxy", 1);
 const PORT = process.env.PORT || 8080;
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -18,6 +18,7 @@ app.use(
         ],
         methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
         allowedHeaders: ["Content-Type", "Authorization"],
+        credentials: true,
     })
 );
 app.use(

@@ -11,6 +11,9 @@ import {
     signup,
     verifyEmailOtp,
     resendVerificationOtp,
+    login,
+    getCurrentUser,
+    logout,
 } from "../Controller/controller.js";
 import db from "../DB/db.js";
 const router = express.Router();
@@ -43,5 +46,20 @@ router.post(
 router.post(
     "/auth/resend-verification-otp",
     resendVerificationOtp
+);
+
+router.post(
+    "/auth/login",
+    login
+);
+
+router.get(
+    "/auth/me",
+    getCurrentUser
+);
+
+router.post(
+    "/auth/logout",
+    logout
 );
 export default router;

@@ -8,6 +8,7 @@ import {
     randomBytes,
     randomInt,
     createHmac,
+    createHash,
     timingSafeEqual,
     scrypt as scryptCallback,
 } from "node:crypto";
@@ -101,7 +102,137 @@ const hashPassword = async (password) => {
         derivedKey
     ).toString("hex")}`;
 };
+const verifyPassword = async (
+    password,
+    storedHash
+) => {
+    try {
+        if (!storedHash) {
+            return false;
+        }
 
+        const parts =
+            storedHash.split("$");
+
+        if (
+            parts.length !== 3 ||
+            parts[0] !== "scrypt"
+        ) {
+            return false;
+        }
+
+        const salt =
+            parts[1];
+
+        const savedHashHex =
+            parts[2];
+
+        const derivedKey =
+            await scrypt(
+                password,
+                salt,
+                64
+            );
+
+        const incomingHash =
+            Buffer.from(derivedKey);
+
+        const savedHash =
+            Buffer.from(
+                savedHashHex,
+                "hex"
+            );
+
+        if (
+            incomingHash.length !==
+            savedHash.length
+        ) {
+            return false;
+        }
+
+        return timingSafeEqual(
+            incomingHash,
+            savedHash
+        );
+    } catch {
+        return false;
+    }
+};
+
+
+const SESSION_COOKIE_NAME =
+    process.env.SESSION_COOKIE_NAME ||
+    "ai_course_session";
+
+const SESSION_DAYS =
+    Number(
+        process.env.SESSION_DAYS || 7
+    );
+
+const LOGIN_MAX_ATTEMPTS =
+    Number(
+        process.env.LOGIN_MAX_ATTEMPTS || 5
+    );
+
+const LOGIN_LOCK_MINUTES =
+    Number(
+        process.env.LOGIN_LOCK_MINUTES || 15
+    );
+
+
+const hashSessionToken = (token) =>
+    createHash("sha256")
+        .update(token)
+        .digest("hex");
+
+
+const getCookieValue = (
+    req,
+    cookieName
+) => {
+    const cookieHeader =
+        req.headers.cookie;
+
+    if (!cookieHeader) {
+        return null;
+    }
+
+    const cookies =
+        cookieHeader.split(";");
+
+    for (const cookie of cookies) {
+        const [name, ...valueParts] =
+            cookie.trim().split("=");
+
+        if (name === cookieName) {
+            return decodeURIComponent(
+                valueParts.join("=")
+            );
+        }
+    }
+
+    return null;
+};
+
+
+const getSessionCookieOptions = () => ({
+    httpOnly: true,
+
+    secure:
+        process.env.COOKIE_SECURE ===
+        "true",
+
+    sameSite: "lax",
+
+    path: "/",
+
+    maxAge:
+        SESSION_DAYS *
+        24 *
+        60 *
+        60 *
+        1000,
+});
 const parseBlogTags = (tags) => {
     if (!tags) return [];
 
@@ -1901,5 +2032,497 @@ export const resendVerificationOtp =
                     message:
                         "Unable to resend the verification code right now.",
                 });
+        }
+    };
+
+// ==========================================
+// AUTH - LOGIN
+// ==========================================
+
+export const login = async (req, res) => {
+    try {
+        const {
+            email,
+            password,
+        } = req.body;
+
+        if (
+            !email ||
+            !password
+        ) {
+            return res.status(400).json({
+                success: false,
+                message:
+                    "Email and password are required.",
+            });
+        }
+
+        const cleanEmail =
+            String(email)
+                .trim()
+                .toLowerCase();
+
+        const [users] =
+            await db.execute(
+                `
+                SELECT
+                    id,
+                    first_name,
+                    last_name,
+                    email,
+                    password_hash,
+                    email_verified_at,
+                    status,
+                    failed_login_attempts,
+                    locked_until
+                FROM users
+                WHERE email = ?
+                LIMIT 1
+                `,
+                [cleanEmail]
+            );
+
+        // Don't reveal whether account exists
+        if (users.length === 0) {
+            return res.status(401).json({
+                success: false,
+                message:
+                    "Invalid email or password.",
+            });
+        }
+
+        const user =
+            users[0];
+
+        // ----------------------------------
+        // Account blocked
+        // ----------------------------------
+
+        if (
+            user.status !== "active"
+        ) {
+            return res.status(403).json({
+                success: false,
+                message:
+                    "This account is currently unavailable.",
+            });
+        }
+
+        // ----------------------------------
+        // Temporary login lock
+        // ----------------------------------
+
+        if (
+            user.locked_until &&
+            new Date(
+                user.locked_until
+            ).getTime() >
+            Date.now()
+        ) {
+            const retryAfter =
+                Math.ceil(
+                    (
+                        new Date(
+                            user.locked_until
+                        ).getTime() -
+                        Date.now()
+                    ) /
+                    1000
+                );
+
+            return res.status(429).json({
+                success: false,
+                retryAfter,
+                message:
+                    "Too many failed login attempts. Please try again later.",
+            });
+        }
+
+        // ----------------------------------
+        // Password check
+        // ----------------------------------
+
+        const passwordCorrect =
+            await verifyPassword(
+                password,
+                user.password_hash
+            );
+
+        if (!passwordCorrect) {
+            const failedAttempts =
+                Number(
+                    user.failed_login_attempts ||
+                    0
+                ) + 1;
+
+            if (
+                failedAttempts >=
+                LOGIN_MAX_ATTEMPTS
+            ) {
+                await db.execute(
+                    `
+                    UPDATE users
+                    SET
+                        failed_login_attempts = ?,
+                        locked_until =
+                            DATE_ADD(
+                                NOW(),
+                                INTERVAL ? MINUTE
+                            )
+                    WHERE id = ?
+                    `,
+                    [
+                        failedAttempts,
+                        LOGIN_LOCK_MINUTES,
+                        user.id,
+                    ]
+                );
+
+                return res
+                    .status(429)
+                    .json({
+                        success: false,
+                        message:
+                            `Too many failed login attempts. Please try again in ${LOGIN_LOCK_MINUTES} minutes.`,
+                    });
+            }
+
+            await db.execute(
+                `
+                UPDATE users
+                SET failed_login_attempts = ?
+                WHERE id = ?
+                `,
+                [
+                    failedAttempts,
+                    user.id,
+                ]
+            );
+
+            return res.status(401).json({
+                success: false,
+                message:
+                    "Invalid email or password.",
+            });
+        }
+
+        // ----------------------------------
+        // Email must be verified
+        // ----------------------------------
+
+        if (!user.email_verified_at) {
+            // Password is correct, so reset
+            // failed-attempt counter
+            await db.execute(
+                `
+                UPDATE users
+                SET
+                    failed_login_attempts = 0,
+                    locked_until = NULL
+                WHERE id = ?
+                `,
+                [user.id]
+            );
+
+            return res.status(403).json({
+                success: false,
+                code:
+                    "EMAIL_NOT_VERIFIED",
+                requiresEmailVerification:
+                    true,
+                email:
+                    user.email,
+                message:
+                    "Please verify your email before signing in.",
+            });
+        }
+
+        // ----------------------------------
+        // Successful login
+        // ----------------------------------
+
+        const sessionToken =
+            randomBytes(32)
+                .toString("hex");
+
+        const tokenHash =
+            hashSessionToken(
+                sessionToken
+            );
+
+        const expiresAt =
+            new Date(
+                Date.now() +
+                SESSION_DAYS *
+                24 *
+                60 *
+                60 *
+                1000
+            );
+
+        await db.execute(
+            `
+            INSERT INTO auth_sessions
+            (
+                user_id,
+                token_hash,
+                ip_address,
+                user_agent,
+                expires_at,
+                last_seen_at
+            )
+            VALUES (?, ?, ?, ?, ?, NOW())
+            `,
+            [
+                user.id,
+                tokenHash,
+                req.ip || null,
+                req.get("user-agent") ||
+                null,
+                expiresAt,
+            ]
+        );
+
+        await db.execute(
+            `
+            UPDATE users
+            SET
+                failed_login_attempts = 0,
+                locked_until = NULL,
+                last_login_at =
+                    CURRENT_TIMESTAMP
+            WHERE id = ?
+            `,
+            [user.id]
+        );
+
+        res.cookie(
+            SESSION_COOKIE_NAME,
+            sessionToken,
+            getSessionCookieOptions()
+        );
+
+        return res.status(200).json({
+            success: true,
+            message:
+                "Signed in successfully.",
+            user: {
+                id:
+                    user.id,
+                firstName:
+                    user.first_name,
+                lastName:
+                    user.last_name,
+                email:
+                    user.email,
+            },
+        });
+    } catch (error) {
+        console.error(
+            "Login error:",
+            error
+        );
+
+        return res.status(500).json({
+            success: false,
+            message:
+                "Unable to sign in right now.",
+        });
+    }
+};
+
+// ==========================================
+// AUTH - CURRENT USER
+// ==========================================
+
+export const getCurrentUser =
+    async (req, res) => {
+        try {
+            const sessionToken =
+                getCookieValue(
+                    req,
+                    SESSION_COOKIE_NAME
+                );
+
+            if (!sessionToken) {
+                return res
+                    .status(401)
+                    .json({
+                        success: false,
+                        authenticated:
+                            false,
+                        message:
+                            "Not authenticated.",
+                    });
+            }
+
+            const tokenHash =
+                hashSessionToken(
+                    sessionToken
+                );
+
+            const [sessions] =
+                await db.execute(
+                    `
+                    SELECT
+                        s.id AS session_id,
+                        u.id,
+                        u.first_name,
+                        u.last_name,
+                        u.email,
+                        u.email_verified_at
+                    FROM auth_sessions s
+                    INNER JOIN users u
+                        ON u.id = s.user_id
+                    WHERE
+                        s.token_hash = ?
+                        AND s.revoked_at IS NULL
+                        AND s.expires_at > NOW()
+                        AND u.status = 'active'
+                    LIMIT 1
+                    `,
+                    [tokenHash]
+                );
+
+            if (
+                sessions.length === 0
+            ) {
+                res.clearCookie(
+                    SESSION_COOKIE_NAME,
+                    {
+                        httpOnly: true,
+                        secure:
+                            process.env
+                                .COOKIE_SECURE ===
+                            "true",
+                        sameSite:
+                            "lax",
+                        path: "/",
+                    }
+                );
+
+                return res
+                    .status(401)
+                    .json({
+                        success: false,
+                        authenticated:
+                            false,
+                        message:
+                            "Session expired. Please sign in again.",
+                    });
+            }
+
+            const user =
+                sessions[0];
+
+            await db.execute(
+                `
+                UPDATE auth_sessions
+                SET last_seen_at = NOW()
+                WHERE id = ?
+                `,
+                [
+                    user.session_id,
+                ]
+            );
+
+            return res.status(200).json({
+                success: true,
+                authenticated: true,
+
+                user: {
+                    id:
+                        user.id,
+                    firstName:
+                        user.first_name,
+                    lastName:
+                        user.last_name,
+                    email:
+                        user.email,
+                    emailVerified:
+                        Boolean(
+                            user.email_verified_at
+                        ),
+                },
+            });
+        } catch (error) {
+            console.error(
+                "Current user error:",
+                error
+            );
+
+            return res.status(500).json({
+                success: false,
+                message:
+                    "Unable to check authentication.",
+            });
+        }
+    };
+
+// ==========================================
+// AUTH - LOGOUT
+// ==========================================
+
+export const logout =
+    async (req, res) => {
+        try {
+            const sessionToken =
+                getCookieValue(
+                    req,
+                    SESSION_COOKIE_NAME
+                );
+
+            if (sessionToken) {
+                const tokenHash =
+                    hashSessionToken(
+                        sessionToken
+                    );
+
+                await db.execute(
+                    `
+                    UPDATE auth_sessions
+                    SET revoked_at =
+                        CURRENT_TIMESTAMP
+                    WHERE
+                        token_hash = ?
+                        AND revoked_at IS NULL
+                    `,
+                    [tokenHash]
+                );
+            }
+
+            res.clearCookie(
+                SESSION_COOKIE_NAME,
+                {
+                    httpOnly: true,
+
+                    secure:
+                        process.env
+                            .COOKIE_SECURE ===
+                        "true",
+
+                    sameSite:
+                        "lax",
+
+                    path: "/",
+                }
+            );
+
+            return res.status(200).json({
+                success: true,
+                message:
+                    "Signed out successfully.",
+            });
+        } catch (error) {
+            console.error(
+                "Logout error:",
+                error
+            );
+
+            return res.status(500).json({
+                success: false,
+                message:
+                    "Unable to sign out right now.",
+            });
         }
     };
