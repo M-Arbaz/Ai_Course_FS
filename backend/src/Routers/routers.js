@@ -14,6 +14,9 @@ import {
     login,
     getCurrentUser,
     logout,
+    forgotPassword,
+    verifyResetOtp,
+    resetPassword,
 } from "../Controller/controller.js";
 import db from "../DB/db.js";
 const router = express.Router();
@@ -61,5 +64,20 @@ router.get(
 router.post(
     "/auth/logout",
     logout
+);
+
+router.post(
+    "/auth/forgot-password",
+    forgotPassword
+);
+
+router.post(
+    "/auth/verify-reset-otp",
+    verifyResetOtp
+);
+
+router.post(
+    "/auth/reset-password",
+    resetPassword
 );
 export default router;

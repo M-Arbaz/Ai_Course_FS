@@ -2,6 +2,7 @@ import "dotenv/config";
 import {
     sendContactEmails,
     sendVerificationOtp,
+    sendPasswordResetOtp,
 } from "../Email/email.js";
 import db from "../DB/db.js";
 import {
@@ -19,7 +20,8 @@ const scrypt = promisify(scryptCallback);
 
 const OTP_PURPOSE =
     "email_verification";
-
+const PASSWORD_RESET_PURPOSE =
+    "password_reset";
 const OTP_EXPIRY_MINUTES =
     Number(
         process.env.OTP_EXPIRES_MINUTES || 10
@@ -2524,5 +2526,1006 @@ export const logout =
                 message:
                     "Unable to sign out right now.",
             });
+        }
+    };
+
+// ==========================================
+// AUTH - FORGOT PASSWORD
+// ==========================================
+
+export const forgotPassword =
+    async (req, res) => {
+        let connection;
+
+        try {
+            const { email } =
+                req.body;
+
+            if (!email) {
+                return res
+                    .status(400)
+                    .json({
+                        success: false,
+                        message:
+                            "Email is required.",
+                    });
+            }
+
+            const cleanEmail =
+                String(email)
+                    .trim()
+                    .toLowerCase();
+
+            const emailRegex =
+                /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+            if (
+                !emailRegex.test(
+                    cleanEmail
+                )
+            ) {
+                return res
+                    .status(400)
+                    .json({
+                        success: false,
+                        message:
+                            "Please enter a valid email address.",
+                    });
+            }
+
+            const genericResponse = {
+                success: true,
+                message:
+                    "If an eligible account exists for this email, a password reset code has been sent.",
+            };
+
+            const [users] =
+                await db.execute(
+                    `
+                    SELECT
+                        id,
+                        first_name,
+                        email,
+                        password_hash,
+                        email_verified_at,
+                        status
+                    FROM users
+                    WHERE email = ?
+                    LIMIT 1
+                    `,
+                    [cleanEmail]
+                );
+
+            /*
+             * Do not reveal whether account exists.
+             */
+            if (
+                users.length === 0
+            ) {
+                return res
+                    .status(200)
+                    .json(
+                        genericResponse
+                    );
+            }
+
+            const user =
+                users[0];
+
+            /*
+             * Only normal, verified,
+             * active password accounts.
+             */
+            if (
+                user.status !==
+                "active" ||
+                !user.email_verified_at ||
+                !user.password_hash
+            ) {
+                return res
+                    .status(200)
+                    .json(
+                        genericResponse
+                    );
+            }
+
+            // ----------------------------------
+            // Resend cooldown
+            // ----------------------------------
+
+            const [recentOtps] =
+                await db.execute(
+                    `
+                    SELECT
+                        created_at
+                    FROM auth_otps
+                    WHERE
+                        user_id = ?
+                        AND purpose = ?
+                    ORDER BY id DESC
+                    LIMIT 1
+                    `,
+                    [
+                        user.id,
+                        PASSWORD_RESET_PURPOSE,
+                    ]
+                );
+
+            if (
+                recentOtps.length > 0
+            ) {
+                const lastCreated =
+                    new Date(
+                        recentOtps[0]
+                            .created_at
+                    ).getTime();
+
+                const secondsPassed =
+                    Math.floor(
+                        (
+                            Date.now() -
+                            lastCreated
+                        ) /
+                        1000
+                    );
+
+                /*
+                 * Return same generic response
+                 * to avoid account enumeration.
+                 */
+                if (
+                    secondsPassed <
+                    OTP_RESEND_SECONDS
+                ) {
+                    return res
+                        .status(200)
+                        .json(
+                            genericResponse
+                        );
+                }
+            }
+
+            const otp =
+                generateOtp();
+
+            const otpHash =
+                hashOtp(otp);
+
+            const expiresAt =
+                new Date(
+                    Date.now() +
+                    OTP_EXPIRY_MINUTES *
+                    60 *
+                    1000
+                );
+
+            connection =
+                await db.getConnection();
+
+            await connection.beginTransaction();
+
+            // Invalidate old reset OTPs
+            await connection.execute(
+                `
+                UPDATE auth_otps
+                SET consumed_at =
+                    CURRENT_TIMESTAMP
+                WHERE
+                    user_id = ?
+                    AND purpose = ?
+                    AND consumed_at IS NULL
+                `,
+                [
+                    user.id,
+                    PASSWORD_RESET_PURPOSE,
+                ]
+            );
+
+            // Save new OTP hash
+            await connection.execute(
+                `
+                INSERT INTO auth_otps
+                (
+                    user_id,
+                    purpose,
+                    code_hash,
+                    attempts,
+                    expires_at,
+                    consumed_at
+                )
+                VALUES (
+                    ?,
+                    ?,
+                    ?,
+                    0,
+                    ?,
+                    NULL
+                )
+                `,
+                [
+                    user.id,
+                    PASSWORD_RESET_PURPOSE,
+                    otpHash,
+                    expiresAt,
+                ]
+            );
+
+            await connection.commit();
+
+            connection.release();
+            connection = null;
+
+            try {
+                await sendPasswordResetOtp({
+                    firstName:
+                        user.first_name,
+
+                    email:
+                        user.email,
+
+                    otp,
+                });
+            } catch (emailError) {
+                console.error(
+                    "Password reset OTP email error:",
+                    emailError
+                );
+
+                /*
+                 * Still return generic response.
+                 * Don't leak account existence.
+                 */
+            }
+
+            return res
+                .status(200)
+                .json(
+                    genericResponse
+                );
+        } catch (error) {
+            if (connection) {
+                try {
+                    await connection.rollback();
+                } catch {
+                    // ignore
+                }
+
+                connection.release();
+            }
+
+            console.error(
+                "Forgot password error:",
+                error
+            );
+
+            return res
+                .status(500)
+                .json({
+                    success: false,
+                    message:
+                        "Unable to process the password reset request right now.",
+                });
+        }
+    };
+
+// ==========================================
+// AUTH - VERIFY PASSWORD RESET OTP
+// ==========================================
+
+export const verifyResetOtp =
+    async (req, res) => {
+        let connection;
+
+        try {
+            const {
+                email,
+                otp,
+            } = req.body;
+
+            if (
+                !email ||
+                !otp
+            ) {
+                return res
+                    .status(400)
+                    .json({
+                        success: false,
+                        message:
+                            "Email and reset code are required.",
+                    });
+            }
+
+            const cleanEmail =
+                String(email)
+                    .trim()
+                    .toLowerCase();
+
+            const cleanOtp =
+                String(otp).trim();
+
+            if (
+                !/^\d{6}$/.test(
+                    cleanOtp
+                )
+            ) {
+                return res
+                    .status(400)
+                    .json({
+                        success: false,
+                        message:
+                            "Please enter a valid 6-digit reset code.",
+                    });
+            }
+
+            connection =
+                await db.getConnection();
+
+            await connection.beginTransaction();
+
+            const [users] =
+                await connection.execute(
+                    `
+                    SELECT
+                        id,
+                        email_verified_at,
+                        status
+                    FROM users
+                    WHERE email = ?
+                    LIMIT 1
+                    FOR UPDATE
+                    `,
+                    [cleanEmail]
+                );
+
+            if (
+                users.length === 0 ||
+                !users[0]
+                    .email_verified_at ||
+                users[0].status !==
+                "active"
+            ) {
+                await connection.rollback();
+
+                connection.release();
+                connection = null;
+
+                return res
+                    .status(400)
+                    .json({
+                        success: false,
+                        message:
+                            "Invalid or expired reset code.",
+                    });
+            }
+
+            const user =
+                users[0];
+
+            const [otpRows] =
+                await connection.execute(
+                    `
+                    SELECT
+                        id,
+                        code_hash,
+                        attempts,
+                        expires_at
+                    FROM auth_otps
+                    WHERE
+                        user_id = ?
+                        AND purpose = ?
+                        AND consumed_at IS NULL
+                    ORDER BY id DESC
+                    LIMIT 1
+                    FOR UPDATE
+                    `,
+                    [
+                        user.id,
+                        PASSWORD_RESET_PURPOSE,
+                    ]
+                );
+
+            if (
+                otpRows.length === 0
+            ) {
+                await connection.rollback();
+
+                connection.release();
+                connection = null;
+
+                return res
+                    .status(400)
+                    .json({
+                        success: false,
+                        message:
+                            "Invalid or expired reset code.",
+                    });
+            }
+
+            const otpRecord =
+                otpRows[0];
+
+            // Attempts exhausted
+            if (
+                Number(
+                    otpRecord.attempts
+                ) >=
+                MAX_OTP_ATTEMPTS
+            ) {
+                await connection.execute(
+                    `
+                    UPDATE auth_otps
+                    SET consumed_at =
+                        CURRENT_TIMESTAMP
+                    WHERE id = ?
+                    `,
+                    [otpRecord.id]
+                );
+
+                await connection.commit();
+
+                connection.release();
+                connection = null;
+
+                return res
+                    .status(429)
+                    .json({
+                        success: false,
+                        message:
+                            "Too many incorrect attempts. Please request a new reset code.",
+                    });
+            }
+
+            // Expired
+            if (
+                new Date(
+                    otpRecord.expires_at
+                ).getTime() <=
+                Date.now()
+            ) {
+                await connection.execute(
+                    `
+                    UPDATE auth_otps
+                    SET consumed_at =
+                        CURRENT_TIMESTAMP
+                    WHERE id = ?
+                    `,
+                    [otpRecord.id]
+                );
+
+                await connection.commit();
+
+                connection.release();
+                connection = null;
+
+                return res
+                    .status(400)
+                    .json({
+                        success: false,
+                        message:
+                            "Reset code has expired. Please request a new code.",
+                    });
+            }
+
+            const isCorrect =
+                verifyOtpHash(
+                    cleanOtp,
+                    otpRecord.code_hash
+                );
+
+            if (!isCorrect) {
+                const newAttempts =
+                    Number(
+                        otpRecord.attempts
+                    ) + 1;
+
+                if (
+                    newAttempts >=
+                    MAX_OTP_ATTEMPTS
+                ) {
+                    await connection.execute(
+                        `
+                        UPDATE auth_otps
+                        SET
+                            attempts = ?,
+                            consumed_at =
+                                CURRENT_TIMESTAMP
+                        WHERE id = ?
+                        `,
+                        [
+                            newAttempts,
+                            otpRecord.id,
+                        ]
+                    );
+                } else {
+                    await connection.execute(
+                        `
+                        UPDATE auth_otps
+                        SET attempts = ?
+                        WHERE id = ?
+                        `,
+                        [
+                            newAttempts,
+                            otpRecord.id,
+                        ]
+                    );
+                }
+
+                await connection.commit();
+
+                connection.release();
+                connection = null;
+
+                return res
+                    .status(400)
+                    .json({
+                        success: false,
+
+                        message:
+                            newAttempts >=
+                                MAX_OTP_ATTEMPTS
+                                ? "Too many incorrect attempts. Please request a new reset code."
+                                : "Incorrect reset code.",
+                    });
+            }
+
+            /*
+             * IMPORTANT:
+             * Do NOT consume OTP here.
+             *
+             * Same OTP will be submitted once
+             * more with the new password.
+             *
+             * It becomes consumed only when
+             * password change succeeds.
+             */
+
+            await connection.commit();
+
+            connection.release();
+            connection = null;
+
+            return res
+                .status(200)
+                .json({
+                    success: true,
+                    resetVerified: true,
+                    message:
+                        "Reset code verified. You can now create a new password.",
+                });
+        } catch (error) {
+            if (connection) {
+                try {
+                    await connection.rollback();
+                } catch {
+                    // ignore
+                }
+
+                connection.release();
+            }
+
+            console.error(
+                "Verify reset OTP error:",
+                error
+            );
+
+            return res
+                .status(500)
+                .json({
+                    success: false,
+                    message:
+                        "Unable to verify the reset code right now.",
+                });
+        }
+    };
+
+// ==========================================
+// AUTH - RESET PASSWORD
+// ==========================================
+
+export const resetPassword =
+    async (req, res) => {
+        let connection;
+
+        try {
+            const {
+                email,
+                otp,
+                password,
+                confirmPassword,
+            } = req.body;
+
+            if (
+                !email ||
+                !otp ||
+                !password ||
+                !confirmPassword
+            ) {
+                return res
+                    .status(400)
+                    .json({
+                        success: false,
+                        message:
+                            "Please fill in all required fields.",
+                    });
+            }
+
+            const cleanEmail =
+                String(email)
+                    .trim()
+                    .toLowerCase();
+
+            const cleanOtp =
+                String(otp).trim();
+
+            if (
+                !/^\d{6}$/.test(
+                    cleanOtp
+                )
+            ) {
+                return res
+                    .status(400)
+                    .json({
+                        success: false,
+                        message:
+                            "Invalid reset code.",
+                    });
+            }
+
+            if (
+                password !==
+                confirmPassword
+            ) {
+                return res
+                    .status(400)
+                    .json({
+                        success: false,
+                        message:
+                            "Password and confirm password do not match.",
+                    });
+            }
+
+            if (
+                password.length < 8 ||
+                password.length > 128
+            ) {
+                return res
+                    .status(400)
+                    .json({
+                        success: false,
+                        message:
+                            "Password must be between 8 and 128 characters.",
+                    });
+            }
+
+            if (
+                !/[A-Za-z]/.test(
+                    password
+                )
+            ) {
+                return res
+                    .status(400)
+                    .json({
+                        success: false,
+                        message:
+                            "Password must contain at least one letter.",
+                    });
+            }
+
+            if (
+                !/[0-9]/.test(
+                    password
+                )
+            ) {
+                return res
+                    .status(400)
+                    .json({
+                        success: false,
+                        message:
+                            "Password must contain at least one number.",
+                    });
+            }
+
+            const newPasswordHash =
+                await hashPassword(
+                    password
+                );
+
+            connection =
+                await db.getConnection();
+
+            await connection.beginTransaction();
+
+            const [users] =
+                await connection.execute(
+                    `
+                    SELECT
+                        id,
+                        email_verified_at,
+                        status
+                    FROM users
+                    WHERE email = ?
+                    LIMIT 1
+                    FOR UPDATE
+                    `,
+                    [cleanEmail]
+                );
+
+            if (
+                users.length === 0 ||
+                !users[0]
+                    .email_verified_at ||
+                users[0].status !==
+                "active"
+            ) {
+                await connection.rollback();
+
+                connection.release();
+                connection = null;
+
+                return res
+                    .status(400)
+                    .json({
+                        success: false,
+                        message:
+                            "Invalid or expired password reset request.",
+                    });
+            }
+
+            const user =
+                users[0];
+
+            const [otpRows] =
+                await connection.execute(
+                    `
+                    SELECT
+                        id,
+                        code_hash,
+                        attempts,
+                        expires_at
+                    FROM auth_otps
+                    WHERE
+                        user_id = ?
+                        AND purpose = ?
+                        AND consumed_at IS NULL
+                    ORDER BY id DESC
+                    LIMIT 1
+                    FOR UPDATE
+                    `,
+                    [
+                        user.id,
+                        PASSWORD_RESET_PURPOSE,
+                    ]
+                );
+
+            if (
+                otpRows.length === 0
+            ) {
+                await connection.rollback();
+
+                connection.release();
+                connection = null;
+
+                return res
+                    .status(400)
+                    .json({
+                        success: false,
+                        message:
+                            "Invalid or expired password reset request.",
+                    });
+            }
+
+            const otpRecord =
+                otpRows[0];
+
+            if (
+                Number(
+                    otpRecord.attempts
+                ) >=
+                MAX_OTP_ATTEMPTS
+            ) {
+                await connection.rollback();
+
+                connection.release();
+                connection = null;
+
+                return res
+                    .status(429)
+                    .json({
+                        success: false,
+                        message:
+                            "Too many incorrect attempts. Please request a new reset code.",
+                    });
+            }
+
+            if (
+                new Date(
+                    otpRecord.expires_at
+                ).getTime() <=
+                Date.now()
+            ) {
+                await connection.execute(
+                    `
+                    UPDATE auth_otps
+                    SET consumed_at =
+                        CURRENT_TIMESTAMP
+                    WHERE id = ?
+                    `,
+                    [otpRecord.id]
+                );
+
+                await connection.commit();
+
+                connection.release();
+                connection = null;
+
+                return res
+                    .status(400)
+                    .json({
+                        success: false,
+                        message:
+                            "Password reset code has expired.",
+                    });
+            }
+
+            const isCorrect =
+                verifyOtpHash(
+                    cleanOtp,
+                    otpRecord.code_hash
+                );
+
+            if (!isCorrect) {
+                const newAttempts =
+                    Number(
+                        otpRecord.attempts
+                    ) + 1;
+
+                await connection.execute(
+                    `
+                    UPDATE auth_otps
+                    SET
+                        attempts = ?,
+                        consumed_at =
+                            CASE
+                                WHEN ? >= ?
+                                THEN CURRENT_TIMESTAMP
+                                ELSE consumed_at
+                            END
+                    WHERE id = ?
+                    `,
+                    [
+                        newAttempts,
+                        newAttempts,
+                        MAX_OTP_ATTEMPTS,
+                        otpRecord.id,
+                    ]
+                );
+
+                await connection.commit();
+
+                connection.release();
+                connection = null;
+
+                return res
+                    .status(400)
+                    .json({
+                        success: false,
+                        message:
+                            "Invalid or expired password reset request.",
+                    });
+            }
+
+            // ----------------------------------
+            // Update password
+            // ----------------------------------
+
+            await connection.execute(
+                `
+                UPDATE users
+                SET
+                    password_hash = ?,
+                    password_changed_at =
+                        CURRENT_TIMESTAMP,
+                    failed_login_attempts = 0,
+                    locked_until = NULL,
+                    updated_at =
+                        CURRENT_TIMESTAMP
+                WHERE id = ?
+                `,
+                [
+                    newPasswordHash,
+                    user.id,
+                ]
+            );
+
+            // ----------------------------------
+            // Consume ALL reset OTPs
+            // ----------------------------------
+
+            await connection.execute(
+                `
+                UPDATE auth_otps
+                SET consumed_at =
+                    CURRENT_TIMESTAMP
+                WHERE
+                    user_id = ?
+                    AND purpose = ?
+                    AND consumed_at IS NULL
+                `,
+                [
+                    user.id,
+                    PASSWORD_RESET_PURPOSE,
+                ]
+            );
+
+            // ----------------------------------
+            // Revoke ALL existing sessions
+            // ----------------------------------
+
+            await connection.execute(
+                `
+                UPDATE auth_sessions
+                SET revoked_at =
+                    CURRENT_TIMESTAMP
+                WHERE
+                    user_id = ?
+                    AND revoked_at IS NULL
+                `,
+                [user.id]
+            );
+
+            await connection.commit();
+
+            connection.release();
+            connection = null;
+
+            /*
+             * Clear cookie from this browser too.
+             */
+            res.clearCookie(
+                SESSION_COOKIE_NAME,
+                {
+                    httpOnly: true,
+
+                    secure:
+                        process.env
+                            .COOKIE_SECURE ===
+                        "true",
+
+                    sameSite: "lax",
+
+                    path: "/",
+                }
+            );
+
+            return res
+                .status(200)
+                .json({
+                    success: true,
+                    message:
+                        "Password reset successfully. Please sign in with your new password.",
+                });
+        } catch (error) {
+            if (connection) {
+                try {
+                    await connection.rollback();
+                } catch {
+                    // ignore
+                }
+
+                connection.release();
+            }
+
+            console.error(
+                "Reset password error:",
+                error
+            );
+
+            return res
+                .status(500)
+                .json({
+                    success: false,
+                    message:
+                        "Unable to reset your password right now.",
+                });
         }
     };

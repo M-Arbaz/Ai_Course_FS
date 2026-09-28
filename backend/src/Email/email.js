@@ -326,3 +326,171 @@ AI Course Team
         `,
   });
 };
+
+export const sendPasswordResetOtp = async ({
+  firstName,
+  email,
+  otp,
+}) => {
+  const safeFirstName =
+    escapeHtml(firstName || "there");
+
+  const safeOtp =
+    escapeHtml(String(otp));
+
+  await transporter.sendMail({
+    from: `"AI Course Team" <${process.env.OTP_EMAIL}>`,
+
+    to: email,
+
+    subject: "Reset your password - AI Course",
+
+    text: `
+Hi ${firstName || "there"},
+
+We received a request to reset your AI Course password.
+
+Your password reset code is:
+
+${otp}
+
+This code will expire in 10 minutes.
+
+If you did not request a password reset, you can safely ignore this email.
+
+AI Course Team
+        `.trim(),
+
+    html: `
+            <div
+                style="
+                    font-family: Arial, sans-serif;
+                    max-width: 620px;
+                    margin: 0 auto;
+                    color: #21172f;
+                "
+            >
+                <div
+                    style="
+                        background: linear-gradient(
+                            135deg,
+                            #8B5CF6,
+                            #7C3AED
+                        );
+                        color: white;
+                        padding: 30px;
+                        border-radius: 18px 18px 0 0;
+                        text-align: center;
+                    "
+                >
+                    <h1
+                        style="
+                            margin: 0;
+                            font-size: 26px;
+                        "
+                    >
+                        Reset Your Password
+                    </h1>
+
+                    <p
+                        style="
+                            margin: 10px 0 0;
+                            opacity: 0.9;
+                        "
+                    >
+                        AI Course
+                    </p>
+                </div>
+
+                <div
+                    style="
+                        border: 1px solid #EDE9FE;
+                        border-top: none;
+                        padding: 30px;
+                        border-radius: 0 0 18px 18px;
+                    "
+                >
+                    <p style="font-size: 16px;">
+                        Hi
+                        <strong>
+                            ${safeFirstName}
+                        </strong>,
+                    </p>
+
+                    <p
+                        style="
+                            font-size: 16px;
+                            line-height: 1.7;
+                        "
+                    >
+                        We received a request to reset
+                        your AI Course password.
+                    </p>
+
+                    <div
+                        style="
+                            background: #EDE9FE;
+                            border-radius: 16px;
+                            padding: 24px;
+                            margin: 26px 0;
+                            text-align: center;
+                        "
+                    >
+                        <div
+                            style="
+                                font-size: 13px;
+                                color: #6b5b7d;
+                                margin-bottom: 8px;
+                            "
+                        >
+                            PASSWORD RESET CODE
+                        </div>
+
+                        <div
+                            style="
+                                font-size: 36px;
+                                font-weight: 700;
+                                letter-spacing: 8px;
+                                color: #7C3AED;
+                            "
+                        >
+                            ${safeOtp}
+                        </div>
+                    </div>
+
+                    <p
+                        style="
+                            font-size: 14px;
+                            color: #6b7280;
+                            line-height: 1.6;
+                        "
+                    >
+                        This code expires in
+                        <strong>10 minutes</strong>.
+                    </p>
+
+                    <div
+                        style="
+                            background: #FCE7F3;
+                            padding: 16px;
+                            border-radius: 12px;
+                            margin-top: 22px;
+                            font-size: 14px;
+                            line-height: 1.6;
+                        "
+                    >
+                        If you did not request this
+                        password reset, ignore this
+                        email. Your password will
+                        remain unchanged.
+                    </div>
+
+                    <p style="margin-top: 28px;">
+                        Regards,<br />
+                        <strong>AI Course Team</strong>
+                    </p>
+                </div>
+            </div>
+        `,
+  });
+};
