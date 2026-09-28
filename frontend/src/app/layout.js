@@ -1,5 +1,5 @@
 import "./global.css";
-
+import AiAssessmentPopup from "@/components/AiAssessmentPopup";
 export const metadata = {
     title: "AI Learning Academy",
     description:
@@ -9,7 +9,9 @@ export const metadata = {
 export default function RootLayout({ children }) {
     return (
         <html lang="en">
-            <body>{children}</body>
+            <body>{children}
+                <AiAssessmentPopup />
+            </body>
         </html>
     );
 }
