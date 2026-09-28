@@ -8,7 +8,9 @@ import {
     getBlogsByTag,
     submitAiAssessment,
     getCourses,
-    signup
+    signup,
+    verifyEmailOtp,
+    resendVerificationOtp,
 } from "../Controller/controller.js";
 import db from "../DB/db.js";
 const router = express.Router();
@@ -33,4 +35,13 @@ router.get("/blogs/:slug", getBlogBySlug);
 router.post("/ai-assessment", submitAiAssessment);
 
 router.post("/auth/signup", signup);
+router.post(
+    "/auth/verify-email",
+    verifyEmailOtp
+);
+
+router.post(
+    "/auth/resend-verification-otp",
+    resendVerificationOtp
+);
 export default router;
