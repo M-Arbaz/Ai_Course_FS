@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import api from "../../lib/api";
+import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
 
 const initialSignup = {
     firstName: "",
@@ -632,8 +634,10 @@ export default function LoginPage() {
     }[mode];
 
     return (
-        <main
-            className="
+        <>
+            <Navbar />
+            <main
+                className="
                 min-h-screen
                 bg-gradient-to-br
                 from-[#F8F5FF]
@@ -645,10 +649,10 @@ export default function LoginPage() {
                 items-center
                 justify-center
             "
-        >
-            <div className="w-full max-w-[480px]">
-                <div
-                    className="
+            >
+                <div className="w-full max-w-[480px]">
+                    <div
+                        className="
                         overflow-hidden
                         rounded-[30px]
                         border
@@ -656,21 +660,21 @@ export default function LoginPage() {
                         bg-white
                         shadow-[0_24px_80px_rgba(139,92,246,0.14)]
                     "
-                >
-                    <div
-                        className="
+                    >
+                        <div
+                            className="
                             h-2
                             bg-gradient-to-r
                             from-[#8B5CF6]
                             via-[#F9A8D4]
                             to-[#A3E635]
                         "
-                    />
+                        />
 
-                    <div className="p-6 sm:p-9">
-                        <div className="mb-7 text-center">
-                            <div
-                                className="
+                        <div className="p-6 sm:p-9">
+                            <div className="mb-7 text-center">
+                                <div
+                                    className="
                                     mx-auto
                                     mb-4
                                     flex
@@ -682,36 +686,36 @@ export default function LoginPage() {
                                     bg-[#EDE9FE]
                                     text-2xl
                                 "
-                            >
-                                ✨
-                            </div>
+                                >
+                                    ✨
+                                </div>
 
-                            <h1
-                                className="
+                                <h1
+                                    className="
                                     text-3xl
                                     font-bold
                                     tracking-tight
                                     text-[#21172f]
                                 "
-                            >
-                                {heading}
-                            </h1>
+                                >
+                                    {heading}
+                                </h1>
 
-                            <p
-                                className="
+                                <p
+                                    className="
                                     mt-2
                                     text-sm
                                     leading-6
                                     text-gray-500
                                 "
-                            >
-                                {description}
-                            </p>
-                        </div>
+                                >
+                                    {description}
+                                </p>
+                            </div>
 
-                        {error && (
-                            <div
-                                className="
+                            {error && (
+                                <div
+                                    className="
                                     mb-5
                                     rounded-xl
                                     border
@@ -722,14 +726,14 @@ export default function LoginPage() {
                                     text-sm
                                     text-red-700
                                 "
-                            >
-                                {error}
-                            </div>
-                        )}
+                                >
+                                    {error}
+                                </div>
+                            )}
 
-                        {success && (
-                            <div
-                                className="
+                            {success && (
+                                <div
+                                    className="
                                     mb-5
                                     rounded-xl
                                     border
@@ -740,231 +744,231 @@ export default function LoginPage() {
                                     text-sm
                                     text-lime-800
                                 "
-                            >
-                                {success}
-                            </div>
-                        )}
+                                >
+                                    {success}
+                                </div>
+                            )}
 
-                        {/* ================= LOGIN ================= */}
+                            {/* ================= LOGIN ================= */}
 
-                        {mode === "login" && (
-                            <form
-                                onSubmit={handleLogin}
-                                className="space-y-5"
-                            >
-                                <FieldLabel text="Email Address">
-                                    <input
-                                        type="email"
-                                        autoComplete="email"
-                                        value={loginEmail}
-                                        onChange={(event) =>
-                                            setLoginEmail(
-                                                event.target.value
-                                            )
-                                        }
-                                        placeholder="you@example.com"
-                                        className={inputClass}
-                                    />
-                                </FieldLabel>
+                            {mode === "login" && (
+                                <form
+                                    onSubmit={handleLogin}
+                                    className="space-y-5"
+                                >
+                                    <FieldLabel text="Email Address">
+                                        <input
+                                            type="email"
+                                            autoComplete="email"
+                                            value={loginEmail}
+                                            onChange={(event) =>
+                                                setLoginEmail(
+                                                    event.target.value
+                                                )
+                                            }
+                                            placeholder="you@example.com"
+                                            className={inputClass}
+                                        />
+                                    </FieldLabel>
 
-                                <FieldLabel text="Password">
-                                    <PasswordInput
-                                        value={loginPassword}
-                                        onChange={
-                                            setLoginPassword
-                                        }
-                                        show={showPassword}
-                                        onToggle={() =>
-                                            setShowPassword(
-                                                (current) =>
-                                                    !current
-                                            )
-                                        }
-                                        autoComplete="current-password"
-                                    />
-                                </FieldLabel>
+                                    <FieldLabel text="Password">
+                                        <PasswordInput
+                                            value={loginPassword}
+                                            onChange={
+                                                setLoginPassword
+                                            }
+                                            show={showPassword}
+                                            onToggle={() =>
+                                                setShowPassword(
+                                                    (current) =>
+                                                        !current
+                                                )
+                                            }
+                                            autoComplete="current-password"
+                                        />
+                                    </FieldLabel>
 
-                                <div className="flex justify-end">
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            setAuthEmail(
-                                                loginEmail
-                                                    .trim()
-                                                    .toLowerCase()
-                                            );
+                                    <div className="flex justify-end">
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setAuthEmail(
+                                                    loginEmail
+                                                        .trim()
+                                                        .toLowerCase()
+                                                );
 
-                                            changeMode(
-                                                "forgotPassword"
-                                            );
-                                        }}
-                                        className="
+                                                changeMode(
+                                                    "forgotPassword"
+                                                );
+                                            }}
+                                            className="
                                             text-sm
                                             font-semibold
                                             text-[#8B5CF6]
                                             hover:underline
                                         "
-                                    >
-                                        Forgot password?
-                                    </button>
-                                </div>
+                                        >
+                                            Forgot password?
+                                        </button>
+                                    </div>
 
-                                <PrimaryButton
-                                    loading={loading}
-                                    text="Sign In"
-                                    loadingText="Signing in..."
-                                />
+                                    <PrimaryButton
+                                        loading={loading}
+                                        text="Sign In"
+                                        loadingText="Signing in..."
+                                    />
 
-                                <GoogleDivider />
+                                    <GoogleDivider />
 
-                                <GoogleButton />
+                                    <GoogleButton />
 
-                                <p
-                                    className="
+                                    <p
+                                        className="
                                         text-center
                                         text-sm
                                         text-gray-500
                                     "
-                                >
-                                    Don&apos;t have an
-                                    account?{" "}
-                                    <button
-                                        type="button"
-                                        onClick={() =>
-                                            changeMode(
-                                                "signup"
-                                            )
-                                        }
-                                        className="
+                                    >
+                                        Don&apos;t have an
+                                        account?{" "}
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                changeMode(
+                                                    "signup"
+                                                )
+                                            }
+                                            className="
                                             font-bold
                                             text-[#8B5CF6]
                                             hover:underline
                                         "
-                                    >
-                                        Create Account
-                                    </button>
-                                </p>
-                            </form>
-                        )}
+                                        >
+                                            Create Account
+                                        </button>
+                                    </p>
+                                </form>
+                            )}
 
-                        {/* ================= SIGNUP ================= */}
+                            {/* ================= SIGNUP ================= */}
 
-                        {mode === "signup" && (
-                            <form
-                                onSubmit={handleSignup}
-                                className="space-y-5"
-                            >
-                                <div
-                                    className="
+                            {mode === "signup" && (
+                                <form
+                                    onSubmit={handleSignup}
+                                    className="space-y-5"
+                                >
+                                    <div
+                                        className="
                                         grid
                                         grid-cols-1
                                         gap-4
                                         sm:grid-cols-2
                                     "
-                                >
-                                    <FieldLabel text="First Name">
+                                    >
+                                        <FieldLabel text="First Name">
+                                            <input
+                                                name="firstName"
+                                                value={
+                                                    signup.firstName
+                                                }
+                                                onChange={
+                                                    handleSignupChange
+                                                }
+                                                autoComplete="given-name"
+                                                placeholder="First name"
+                                                className={
+                                                    inputClass
+                                                }
+                                            />
+                                        </FieldLabel>
+
+                                        <FieldLabel text="Last Name">
+                                            <input
+                                                name="lastName"
+                                                value={
+                                                    signup.lastName
+                                                }
+                                                onChange={
+                                                    handleSignupChange
+                                                }
+                                                autoComplete="family-name"
+                                                placeholder="Last name"
+                                                className={
+                                                    inputClass
+                                                }
+                                            />
+                                        </FieldLabel>
+                                    </div>
+
+                                    <FieldLabel text="Email Address">
                                         <input
-                                            name="firstName"
-                                            value={
-                                                signup.firstName
-                                            }
+                                            name="email"
+                                            type="email"
+                                            value={signup.email}
                                             onChange={
                                                 handleSignupChange
                                             }
-                                            autoComplete="given-name"
-                                            placeholder="First name"
-                                            className={
-                                                inputClass
-                                            }
+                                            autoComplete="email"
+                                            placeholder="you@example.com"
+                                            className={inputClass}
                                         />
                                     </FieldLabel>
 
-                                    <FieldLabel text="Last Name">
-                                        <input
-                                            name="lastName"
+                                    <FieldLabel text="Password">
+                                        <PasswordInput
                                             value={
-                                                signup.lastName
+                                                signup.password
                                             }
-                                            onChange={
-                                                handleSignupChange
+                                            onChange={(value) =>
+                                                setSignup(
+                                                    (current) => ({
+                                                        ...current,
+                                                        password:
+                                                            value,
+                                                    })
+                                                )
                                             }
-                                            autoComplete="family-name"
-                                            placeholder="Last name"
-                                            className={
-                                                inputClass
+                                            show={showPassword}
+                                            onToggle={() =>
+                                                setShowPassword(
+                                                    (current) =>
+                                                        !current
+                                                )
                                             }
+                                            autoComplete="new-password"
                                         />
                                     </FieldLabel>
-                                </div>
 
-                                <FieldLabel text="Email Address">
-                                    <input
-                                        name="email"
-                                        type="email"
-                                        value={signup.email}
-                                        onChange={
-                                            handleSignupChange
-                                        }
-                                        autoComplete="email"
-                                        placeholder="you@example.com"
-                                        className={inputClass}
-                                    />
-                                </FieldLabel>
+                                    <FieldLabel text="Confirm Password">
+                                        <PasswordInput
+                                            value={
+                                                signup.confirmPassword
+                                            }
+                                            onChange={(value) =>
+                                                setSignup(
+                                                    (current) => ({
+                                                        ...current,
+                                                        confirmPassword:
+                                                            value,
+                                                    })
+                                                )
+                                            }
+                                            show={
+                                                showConfirmPassword
+                                            }
+                                            onToggle={() =>
+                                                setShowConfirmPassword(
+                                                    (current) =>
+                                                        !current
+                                                )
+                                            }
+                                            autoComplete="new-password"
+                                        />
+                                    </FieldLabel>
 
-                                <FieldLabel text="Password">
-                                    <PasswordInput
-                                        value={
-                                            signup.password
-                                        }
-                                        onChange={(value) =>
-                                            setSignup(
-                                                (current) => ({
-                                                    ...current,
-                                                    password:
-                                                        value,
-                                                })
-                                            )
-                                        }
-                                        show={showPassword}
-                                        onToggle={() =>
-                                            setShowPassword(
-                                                (current) =>
-                                                    !current
-                                            )
-                                        }
-                                        autoComplete="new-password"
-                                    />
-                                </FieldLabel>
-
-                                <FieldLabel text="Confirm Password">
-                                    <PasswordInput
-                                        value={
-                                            signup.confirmPassword
-                                        }
-                                        onChange={(value) =>
-                                            setSignup(
-                                                (current) => ({
-                                                    ...current,
-                                                    confirmPassword:
-                                                        value,
-                                                })
-                                            )
-                                        }
-                                        show={
-                                            showConfirmPassword
-                                        }
-                                        onToggle={() =>
-                                            setShowConfirmPassword(
-                                                (current) =>
-                                                    !current
-                                            )
-                                        }
-                                        autoComplete="new-password"
-                                    />
-                                </FieldLabel>
-
-                                <p
-                                    className="
+                                    <p
+                                        className="
                                         rounded-xl
                                         bg-[#F8F5FF]
                                         px-4
@@ -973,75 +977,75 @@ export default function LoginPage() {
                                         leading-5
                                         text-gray-500
                                     "
-                                >
-                                    Use at least 8 characters
-                                    with letters and numbers.
-                                </p>
+                                    >
+                                        Use at least 8 characters
+                                        with letters and numbers.
+                                    </p>
 
-                                <PrimaryButton
-                                    loading={loading}
-                                    text="Create Account"
-                                    loadingText="Creating account..."
-                                />
+                                    <PrimaryButton
+                                        loading={loading}
+                                        text="Create Account"
+                                        loadingText="Creating account..."
+                                    />
 
-                                <GoogleDivider />
+                                    <GoogleDivider />
 
-                                <GoogleButton />
+                                    <GoogleButton />
 
-                                <p
-                                    className="
+                                    <p
+                                        className="
                                         text-center
                                         text-sm
                                         text-gray-500
                                     "
-                                >
-                                    Already have an account?{" "}
-                                    <button
-                                        type="button"
-                                        onClick={() =>
-                                            changeMode(
-                                                "login"
-                                            )
-                                        }
-                                        className="
+                                    >
+                                        Already have an account?{" "}
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                changeMode(
+                                                    "login"
+                                                )
+                                            }
+                                            className="
                                             font-bold
                                             text-[#8B5CF6]
                                             hover:underline
                                         "
-                                    >
-                                        Sign In
-                                    </button>
-                                </p>
-                            </form>
-                        )}
+                                        >
+                                            Sign In
+                                        </button>
+                                    </p>
+                                </form>
+                            )}
 
-                        {/* ============== VERIFY EMAIL ============== */}
+                            {/* ============== VERIFY EMAIL ============== */}
 
-                        {mode === "verifyEmail" && (
-                            <form
-                                onSubmit={
-                                    handleVerifyEmail
-                                }
-                                className="space-y-5"
-                            >
-                                <OtpInput
-                                    value={otp}
-                                    onChange={setOtp}
-                                />
-
-                                <PrimaryButton
-                                    loading={loading}
-                                    text="Verify Email"
-                                    loadingText="Verifying..."
-                                />
-
-                                <button
-                                    type="button"
-                                    disabled={resending}
-                                    onClick={
-                                        handleResendVerification
+                            {mode === "verifyEmail" && (
+                                <form
+                                    onSubmit={
+                                        handleVerifyEmail
                                     }
-                                    className="
+                                    className="space-y-5"
+                                >
+                                    <OtpInput
+                                        value={otp}
+                                        onChange={setOtp}
+                                    />
+
+                                    <PrimaryButton
+                                        loading={loading}
+                                        text="Verify Email"
+                                        loadingText="Verifying..."
+                                    />
+
+                                    <button
+                                        type="button"
+                                        disabled={resending}
+                                        onClick={
+                                            handleResendVerification
+                                        }
+                                        className="
                                         w-full
                                         rounded-xl
                                         border
@@ -1055,172 +1059,174 @@ export default function LoginPage() {
                                         hover:bg-[#F8F5FF]
                                         disabled:opacity-50
                                     "
-                                >
-                                    {resending
-                                        ? "Sending..."
-                                        : "Resend Code"}
-                                </button>
+                                    >
+                                        {resending
+                                            ? "Sending..."
+                                            : "Resend Code"}
+                                    </button>
 
-                                <button
-                                    type="button"
-                                    onClick={() =>
-                                        changeMode("login")
+                                    <button
+                                        type="button"
+                                        onClick={() =>
+                                            changeMode("login")
+                                        }
+                                        className={backClass}
+                                    >
+                                        ← Back to Sign In
+                                    </button>
+                                </form>
+                            )}
+
+                            {/* ============== FORGOT PASSWORD ============== */}
+
+                            {mode === "forgotPassword" && (
+                                <form
+                                    onSubmit={
+                                        handleForgotPassword
                                     }
-                                    className={backClass}
+                                    className="space-y-5"
                                 >
-                                    ← Back to Sign In
-                                </button>
-                            </form>
-                        )}
+                                    <FieldLabel text="Email Address">
+                                        <input
+                                            type="email"
+                                            autoComplete="email"
+                                            value={authEmail}
+                                            onChange={(event) =>
+                                                setAuthEmail(
+                                                    event.target.value
+                                                )
+                                            }
+                                            placeholder="you@example.com"
+                                            className={inputClass}
+                                        />
+                                    </FieldLabel>
 
-                        {/* ============== FORGOT PASSWORD ============== */}
+                                    <PrimaryButton
+                                        loading={loading}
+                                        text="Send Reset Code"
+                                        loadingText="Sending..."
+                                    />
 
-                        {mode === "forgotPassword" && (
-                            <form
-                                onSubmit={
-                                    handleForgotPassword
-                                }
-                                className="space-y-5"
-                            >
-                                <FieldLabel text="Email Address">
-                                    <input
-                                        type="email"
-                                        autoComplete="email"
-                                        value={authEmail}
-                                        onChange={(event) =>
-                                            setAuthEmail(
-                                                event.target.value
+                                    <button
+                                        type="button"
+                                        onClick={() =>
+                                            changeMode("login")
+                                        }
+                                        className={backClass}
+                                    >
+                                        ← Back to Sign In
+                                    </button>
+                                </form>
+                            )}
+
+                            {/* ============== VERIFY RESET ============== */}
+
+                            {mode === "verifyReset" && (
+                                <form
+                                    onSubmit={
+                                        handleVerifyResetOtp
+                                    }
+                                    className="space-y-5"
+                                >
+                                    <OtpInput
+                                        value={otp}
+                                        onChange={setOtp}
+                                    />
+
+                                    <PrimaryButton
+                                        loading={loading}
+                                        text="Verify Reset Code"
+                                        loadingText="Verifying..."
+                                    />
+
+                                    <button
+                                        type="button"
+                                        onClick={() =>
+                                            changeMode(
+                                                "forgotPassword"
                                             )
                                         }
-                                        placeholder="you@example.com"
-                                        className={inputClass}
-                                    />
-                                </FieldLabel>
+                                        className={backClass}
+                                    >
+                                        ← Request another code
+                                    </button>
+                                </form>
+                            )}
 
-                                <PrimaryButton
-                                    loading={loading}
-                                    text="Send Reset Code"
-                                    loadingText="Sending..."
-                                />
+                            {/* ============== RESET PASSWORD ============== */}
 
-                                <button
-                                    type="button"
-                                    onClick={() =>
-                                        changeMode("login")
+                            {mode === "resetPassword" && (
+                                <form
+                                    onSubmit={
+                                        handleResetPassword
                                     }
-                                    className={backClass}
+                                    className="space-y-5"
                                 >
-                                    ← Back to Sign In
-                                </button>
-                            </form>
-                        )}
+                                    <FieldLabel text="New Password">
+                                        <PasswordInput
+                                            value={
+                                                resetPassword
+                                            }
+                                            onChange={
+                                                setResetPassword
+                                            }
+                                            show={showPassword}
+                                            onToggle={() =>
+                                                setShowPassword(
+                                                    (current) =>
+                                                        !current
+                                                )
+                                            }
+                                            autoComplete="new-password"
+                                        />
+                                    </FieldLabel>
 
-                        {/* ============== VERIFY RESET ============== */}
+                                    <FieldLabel text="Confirm New Password">
+                                        <PasswordInput
+                                            value={
+                                                resetConfirmPassword
+                                            }
+                                            onChange={
+                                                setResetConfirmPassword
+                                            }
+                                            show={
+                                                showConfirmPassword
+                                            }
+                                            onToggle={() =>
+                                                setShowConfirmPassword(
+                                                    (current) =>
+                                                        !current
+                                                )
+                                            }
+                                            autoComplete="new-password"
+                                        />
+                                    </FieldLabel>
 
-                        {mode === "verifyReset" && (
-                            <form
-                                onSubmit={
-                                    handleVerifyResetOtp
-                                }
-                                className="space-y-5"
-                            >
-                                <OtpInput
-                                    value={otp}
-                                    onChange={setOtp}
-                                />
-
-                                <PrimaryButton
-                                    loading={loading}
-                                    text="Verify Reset Code"
-                                    loadingText="Verifying..."
-                                />
-
-                                <button
-                                    type="button"
-                                    onClick={() =>
-                                        changeMode(
-                                            "forgotPassword"
-                                        )
-                                    }
-                                    className={backClass}
-                                >
-                                    ← Request another code
-                                </button>
-                            </form>
-                        )}
-
-                        {/* ============== RESET PASSWORD ============== */}
-
-                        {mode === "resetPassword" && (
-                            <form
-                                onSubmit={
-                                    handleResetPassword
-                                }
-                                className="space-y-5"
-                            >
-                                <FieldLabel text="New Password">
-                                    <PasswordInput
-                                        value={
-                                            resetPassword
-                                        }
-                                        onChange={
-                                            setResetPassword
-                                        }
-                                        show={showPassword}
-                                        onToggle={() =>
-                                            setShowPassword(
-                                                (current) =>
-                                                    !current
-                                            )
-                                        }
-                                        autoComplete="new-password"
+                                    <PrimaryButton
+                                        loading={loading}
+                                        text="Reset Password"
+                                        loadingText="Resetting password..."
                                     />
-                                </FieldLabel>
-
-                                <FieldLabel text="Confirm New Password">
-                                    <PasswordInput
-                                        value={
-                                            resetConfirmPassword
-                                        }
-                                        onChange={
-                                            setResetConfirmPassword
-                                        }
-                                        show={
-                                            showConfirmPassword
-                                        }
-                                        onToggle={() =>
-                                            setShowConfirmPassword(
-                                                (current) =>
-                                                    !current
-                                            )
-                                        }
-                                        autoComplete="new-password"
-                                    />
-                                </FieldLabel>
-
-                                <PrimaryButton
-                                    loading={loading}
-                                    text="Reset Password"
-                                    loadingText="Resetting password..."
-                                />
-                            </form>
-                        )}
+                                </form>
+                            )}
+                        </div>
                     </div>
-                </div>
 
-                <p
-                    className="
+                    <p
+                        className="
                         mt-5
                         text-center
                         text-xs
                         leading-5
                         text-gray-400
                     "
-                >
-                    Secure authentication for AI Course.
-                </p>
-            </div>
-        </main>
+                    >
+                        Secure authentication for AI Course.
+                    </p>
+                </div>
+            </main>
+            <Footer />
+        </>
     );
 }
 
