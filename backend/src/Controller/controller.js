@@ -15,11 +15,25 @@ import {
 } from "node:crypto";
 import { OAuth2Client } from "google-auth-library";
 import { promisify } from "node:util";
+import { unlink } from "node:fs/promises";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 const scrypt = promisify(scryptCallback);
 const googleClient = new OAuth2Client(
     process.env.GOOGLE_CLIENT_ID
 );
+const __filename =
+    fileURLToPath(import.meta.url);
+
+const __dirname =
+    path.dirname(__filename);
+
+const USER_PROFILE_DIR =
+    path.resolve(
+        __dirname,
+        "../../public_assets/user_profile"
+    );
 const OTP_PURPOSE =
     "email_verification";
 const PASSWORD_RESET_PURPOSE =
@@ -2371,10 +2385,11 @@ export const getCurrentUser =
                     SELECT
                         s.id AS session_id,
                         u.id,
-                        u.first_name,
-                        u.last_name,
-                        u.email,
-                        u.email_verified_at
+                       u.first_name,
+                       u.last_name,
+                       u.email,
+                       u.profile_image,
+                       u.email_verified_at
                     FROM auth_sessions s
                     INNER JOIN users u
                         ON u.id = s.user_id
@@ -2443,6 +2458,10 @@ export const getCurrentUser =
                         user.last_name,
                     email:
                         user.email,
+
+                    profileImage:
+                        user.profile_image || null,
+
                     emailVerified:
                         Boolean(
                             user.email_verified_at
@@ -3846,3 +3865,170 @@ export const googleLogin = async (req, res) => {
         });
     }
 };
+
+// ==========================================
+// AUTH - UPLOAD PROFILE IMAGE
+// ==========================================
+
+export const uploadProfileImage =
+    async (req, res) => {
+        let newFilePath = null;
+
+        try {
+            if (!req.file) {
+                return res
+                    .status(400)
+                    .json({
+                        success: false,
+                        message:
+                            "Please select a profile image.",
+                    });
+            }
+
+            const userId =
+                req.auth?.userId;
+
+            if (!userId) {
+                return res
+                    .status(401)
+                    .json({
+                        success: false,
+                        message:
+                            "Authentication required.",
+                    });
+            }
+
+            newFilePath =
+                path.join(
+                    USER_PROFILE_DIR,
+                    req.file.filename
+                );
+
+            const [users] =
+                await db.execute(
+                    `
+                    SELECT
+                        id,
+                        profile_image
+                    FROM users
+                    WHERE
+                        id = ?
+                        AND status = 'active'
+                    LIMIT 1
+                    `,
+                    [userId]
+                );
+
+            if (
+                users.length === 0
+            ) {
+                try {
+                    await unlink(
+                        newFilePath
+                    );
+                } catch {
+                    // ignore cleanup error
+                }
+
+                return res
+                    .status(404)
+                    .json({
+                        success: false,
+                        message:
+                            "User account not found.",
+                    });
+            }
+
+            const oldProfileImage =
+                users[0].profile_image;
+
+            const profileImage =
+                `/public_assets/user_profile/${req.file.filename}`;
+
+            await db.execute(
+                `
+                UPDATE users
+                SET
+                    profile_image = ?,
+                    updated_at =
+                        CURRENT_TIMESTAMP
+                WHERE id = ?
+                `,
+                [
+                    profileImage,
+                    userId,
+                ]
+            );
+
+            // Delete old profile image
+            if (
+                oldProfileImage &&
+                oldProfileImage.startsWith(
+                    "/public_assets/user_profile/"
+                )
+            ) {
+                const oldFileName =
+                    path.basename(
+                        oldProfileImage
+                    );
+
+                const oldFilePath =
+                    path.join(
+                        USER_PROFILE_DIR,
+                        oldFileName
+                    );
+
+                try {
+                    await unlink(
+                        oldFilePath
+                    );
+                } catch (error) {
+                    if (
+                        error.code !==
+                        "ENOENT"
+                    ) {
+                        console.error(
+                            "Old profile image delete error:",
+                            error
+                        );
+                    }
+                }
+            }
+
+            return res
+                .status(200)
+                .json({
+                    success: true,
+
+                    message:
+                        "Profile picture updated successfully.",
+
+                    profileImage,
+                });
+        } catch (error) {
+            console.error(
+                "Profile image upload error:",
+                error
+            );
+
+            // DB fail ho to newly uploaded
+            // orphan file remove kar dein
+            if (newFilePath) {
+                try {
+                    await unlink(
+                        newFilePath
+                    );
+                } catch {
+                    // ignore cleanup error
+                }
+            }
+
+            return res
+                .status(500)
+                .json({
+                    success: false,
+                    message:
+                        "Unable to update profile picture.",
+                });
+        }
+    };

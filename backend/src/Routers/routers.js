@@ -18,8 +18,13 @@ import {
     verifyResetOtp,
     resetPassword,
     googleLogin,
+    uploadProfileImage,
 } from "../Controller/controller.js";
 import db from "../DB/db.js";
+import {
+    requireAuth,
+    profileImageUpload,
+} from "../Middelware/middelware.js";
 const router = express.Router();
 
 // TEST ROUTE
@@ -86,5 +91,10 @@ router.post(
     "/auth/google",
     googleLogin
 );
-
+router.post(
+    "/auth/profile-image",
+    requireAuth,
+    profileImageUpload,
+    uploadProfileImage
+);
 export default router;
