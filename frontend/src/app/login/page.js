@@ -23,6 +23,7 @@ export default function LoginPage() {
     const googleButtonRef = useRef(null);
     const [googleLoading, setGoogleLoading] =
         useState(false);
+    const [checkingSession, setCheckingSession] = useState(true);
     const [mode, setMode] = useState("login");
 
     const [loginEmail, setLoginEmail] = useState("");
@@ -64,6 +65,55 @@ export default function LoginPage() {
             return {};
         }
     };
+
+    useEffect(() => {
+        let active = true;
+
+        const checkExistingSession = async () => {
+            try {
+                const response = await fetch(
+                    `${api()}/api/auth/me`,
+                    {
+                        method: "GET",
+                        credentials: "include",
+                        cache: "no-store",
+                    }
+                );
+
+                if (!active) return;
+
+                if (response.ok) {
+                    const data = await response
+                        .json()
+                        .catch(() => ({}));
+
+                    if (data?.authenticated) {
+                        router.replace("/");
+                        router.refresh();
+                        return;
+                    }
+                }
+
+                setCheckingSession(false);
+            } catch (error) {
+                console.error(
+                    "Session check error:",
+                    error
+                );
+
+                if (active) {
+                    setCheckingSession(false);
+                }
+            }
+        };
+
+        checkExistingSession();
+
+        return () => {
+            active = false;
+        };
+    }, [router]);
+
     const handleGoogleCredential = async (
         googleResponse
     ) => {
@@ -116,7 +166,7 @@ export default function LoginPage() {
                 "Signed in with Google successfully."
             );
 
-            router.push("/");
+            router.replace("/");
             router.refresh();
         } catch (error) {
             console.error(
@@ -133,6 +183,9 @@ export default function LoginPage() {
     };
 
     useEffect(() => {
+        if (checkingSession) {
+            return;
+        }
         const clientId =
             process.env
                 .NEXT_PUBLIC_GOOGLE_CLIENT_ID;
@@ -222,7 +275,7 @@ export default function LoginPage() {
         return () => {
             script.onload = null;
         };
-    }, [mode]);
+    }, [mode, checkingSession]);
 
 
     // =====================================================
@@ -292,7 +345,7 @@ export default function LoginPage() {
                 "Signed in successfully."
             );
 
-            router.push("/");
+            router.replace("/");
             router.refresh();
         } catch (error) {
             console.error("Login error:", error);
@@ -798,7 +851,19 @@ export default function LoginPage() {
         resetPassword:
             "Choose a strong new password for your account.",
     }[mode];
+    if (checkingSession) {
+        return (
+            <main className="min-h-screen flex items-center justify-center bg-white">
+                <div className="text-center">
+                    <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-[#EDE9FE] border-t-[#8B5CF6]" />
 
+                    <p className="mt-4 text-sm font-semibold text-gray-500">
+                        Checking your account...
+                    </p>
+                </div>
+            </main>
+        );
+    }
     return (
         <>
             <Navbar />
