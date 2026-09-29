@@ -4,7 +4,9 @@ import cors from "cors";
 import router from "./Routers/routers.js";
 import path from "path";
 import { fileURLToPath } from "url";
-
+import {
+    startProfileImageService,
+} from "./Functions/profileImageService.js";
 const app = express();
 app.set("trust proxy", 1);
 const PORT = process.env.PORT || 8080;
@@ -41,4 +43,5 @@ app.use("/api", router);
 
 app.listen(PORT, () => {
     console.log(`Backend running on port ${PORT}`);
+    startProfileImageService();
 });
