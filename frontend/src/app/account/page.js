@@ -2,6 +2,7 @@
 
 import {
     useEffect,
+    useRef,
     useState,
 } from "react";
 import { useRouter } from "next/navigation";
@@ -19,6 +20,17 @@ export default function AccountPage() {
 
     const [loggingOut, setLoggingOut] =
         useState(false);
+    const profileInputRef = useRef(null);
+
+    const [
+        uploadingProfileImage,
+        setUploadingProfileImage,
+    ] = useState(false);
+
+    const [
+        profileMessage,
+        setProfileMessage,
+    ] = useState("");
 
     const [error, setError] =
         useState("");
@@ -95,6 +107,132 @@ export default function AccountPage() {
         };
     }, [router]);
 
+    const handleProfileImageChange =
+        async (event) => {
+            const file =
+                event.target.files?.[0];
+
+            // Same image dobara select karne ke liye
+            event.target.value = "";
+
+            if (!file) {
+                return;
+            }
+
+            const allowedTypes = [
+                "image/jpeg",
+                "image/png",
+                "image/webp",
+            ];
+
+            if (
+                !allowedTypes.includes(
+                    file.type
+                )
+            ) {
+                setError(
+                    "Only JPG, PNG and WEBP images are allowed."
+                );
+
+                return;
+            }
+
+            if (
+                file.size >
+                3 * 1024 * 1024
+            ) {
+                setError(
+                    "Profile image must be 3MB or smaller."
+                );
+
+                return;
+            }
+
+            try {
+                setUploadingProfileImage(
+                    true
+                );
+
+                setError("");
+                setProfileMessage("");
+
+                const formData =
+                    new FormData();
+
+                formData.append(
+                    "profileImage",
+                    file
+                );
+
+                const response =
+                    await fetch(
+                        `${api()}/api/auth/profile-image`,
+                        {
+                            method: "POST",
+                            credentials:
+                                "include",
+
+                            body: formData,
+                        }
+                    );
+
+                const data =
+                    await response
+                        .json()
+                        .catch(
+                            () => ({})
+                        );
+
+                if (
+                    response.status === 401
+                ) {
+                    router.replace(
+                        "/login"
+                    );
+
+                    return;
+                }
+
+                if (!response.ok) {
+                    setError(
+                        data?.message ||
+                        "Unable to update profile picture."
+                    );
+
+                    return;
+                }
+
+                setUser(
+                    (currentUser) => ({
+                        ...currentUser,
+
+                        profileImage:
+                            data.profileImage,
+                    })
+                );
+
+                setProfileMessage(
+                    "Profile picture updated successfully."
+                );
+            } catch (error) {
+                console.error(
+                    "Profile image upload error:",
+                    error
+                );
+
+                setError(
+                    "Unable to upload profile picture."
+                );
+            } finally {
+                setUploadingProfileImage(
+                    false
+                );
+            }
+        };
+
+
+
+
     const handleLogout = async () => {
         try {
             setLoggingOut(true);
@@ -145,6 +283,13 @@ export default function AccountPage() {
         user?.firstName
             ?.charAt(0)
             .toUpperCase() || "U";
+
+    const profileImageUrl =
+        user?.profileImage
+            ? user.profileImage.startsWith("http")
+                ? user.profileImage
+                : `${api()}${user.profileImage}`
+            : null;
 
     return (
         <>
@@ -199,10 +344,114 @@ export default function AccountPage() {
                         {!loading && user && (
                             <div className="grid gap-8 lg:grid-cols-[0.7fr_1.3fr]">
                                 <div className="rounded-[30px] bg-gradient-to-br from-[#ede9fe] via-[#fce7f3] to-[#dbeafe] p-8">
-                                    <div className="flex h-24 w-24 items-center justify-center rounded-[28px] bg-purple-600 text-4xl font-black text-white shadow-lg shadow-purple-200">
-                                        {initial}
-                                    </div>
+                                    <div className="relative w-fit">
 
+                                        <div
+                                            className="
+            flex
+            h-24
+            w-24
+            items-center
+            justify-center
+            overflow-hidden
+            rounded-[28px]
+            bg-purple-600
+            text-4xl
+            font-black
+            text-white
+            shadow-lg
+            shadow-purple-200
+        "
+                                        >
+                                            {profileImageUrl ? (
+                                                <img
+                                                    src={
+                                                        profileImageUrl
+                                                    }
+                                                    alt="Profile"
+                                                    className="
+                    h-full
+                    w-full
+                    object-cover
+                "
+                                                />
+                                            ) : (
+                                                initial
+                                            )}
+                                        </div>
+
+                                        <input
+                                            ref={profileInputRef}
+                                            type="file"
+                                            accept="image/jpeg,image/png,image/webp"
+                                            onChange={
+                                                handleProfileImageChange
+                                            }
+                                            className="hidden"
+                                        />
+
+                                        <button
+                                            type="button"
+                                            disabled={
+                                                uploadingProfileImage
+                                            }
+                                            onClick={() =>
+                                                profileInputRef.current
+                                                    ?.click()
+                                            }
+                                            title="Change profile picture"
+                                            className="
+            absolute
+            -bottom-2
+            -right-2
+            flex
+            h-9
+            w-9
+            items-center
+            justify-center
+            rounded-full
+            border-4
+            border-white
+            bg-purple-600
+            text-white
+            shadow-lg
+            transition
+            hover:bg-purple-700
+            disabled:cursor-not-allowed
+            disabled:opacity-60
+        "
+                                        >
+                                            {uploadingProfileImage ? (
+                                                <span
+                                                    className="
+                    h-4
+                    w-4
+                    animate-spin
+                    rounded-full
+                    border-2
+                    border-white/40
+                    border-t-white
+                "
+                                                />
+                                            ) : (
+                                                <svg
+                                                    xmlns="http://www.w3.org/2000/svg"
+                                                    width="15"
+                                                    height="15"
+                                                    viewBox="0 0 24 24"
+                                                    fill="none"
+                                                    stroke="currentColor"
+                                                    strokeWidth="2.5"
+                                                    strokeLinecap="round"
+                                                    strokeLinejoin="round"
+                                                >
+                                                    <path d="M12 20h9" />
+                                                    <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                                                </svg>
+                                            )}
+                                        </button>
+
+                                    </div>
                                     <h2 className="mt-6 text-2xl font-black text-[#21172f]">
                                         {user.firstName}{" "}
                                         {user.lastName}
@@ -222,7 +471,13 @@ export default function AccountPage() {
                                                 Email Not Verified
                                             </span>
                                         )}
+                                        {profileMessage && (
+                                            <p className="mt-4 text-sm font-bold text-green-700">
+                                                {profileMessage}
+                                            </p>
+                                        )}
                                     </div>
+
                                 </div>
 
                                 <div className="rounded-[30px] border border-purple-100 bg-white p-7 shadow-xl shadow-purple-100/40 md:p-9">
