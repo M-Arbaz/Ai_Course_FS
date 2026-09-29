@@ -4084,3 +4084,413 @@ export const uploadProfileImage =
                 });
         }
     };
+
+// ==========================================
+// AUTH - UPDATE PROFILE
+// ==========================================
+
+export const updateProfile =
+    async (req, res) => {
+        let connection;
+
+        try {
+            const userId =
+                req.auth?.userId;
+
+            const sessionId =
+                req.auth?.sessionId;
+
+            if (!userId) {
+                return res
+                    .status(401)
+                    .json({
+                        success: false,
+                        message:
+                            "Authentication required.",
+                    });
+            }
+
+            const {
+                firstName,
+                lastName,
+                currentPassword,
+                newPassword,
+                confirmPassword,
+            } = req.body;
+
+            // ==================================
+            // NAME VALIDATION
+            // ==================================
+
+            const cleanFirstName =
+                String(
+                    firstName || ""
+                ).trim();
+
+            const cleanLastName =
+                String(
+                    lastName || ""
+                ).trim();
+
+            if (
+                cleanFirstName.length < 2 ||
+                cleanFirstName.length > 100
+            ) {
+                return res
+                    .status(400)
+                    .json({
+                        success: false,
+                        message:
+                            "First name must be between 2 and 100 characters.",
+                    });
+            }
+
+            if (
+                cleanLastName.length < 2 ||
+                cleanLastName.length > 100
+            ) {
+                return res
+                    .status(400)
+                    .json({
+                        success: false,
+                        message:
+                            "Last name must be between 2 and 100 characters.",
+                    });
+            }
+
+            // ==================================
+            // CHECK IF PASSWORD CHANGE REQUESTED
+            // ==================================
+
+            const wantsPasswordChange =
+                Boolean(
+                    currentPassword ||
+                    newPassword ||
+                    confirmPassword
+                );
+
+            if (
+                wantsPasswordChange &&
+                (
+                    !newPassword ||
+                    !confirmPassword
+                )
+            ) {
+                return res
+                    .status(400)
+                    .json({
+                        success: false,
+                        message:
+                            "Please enter and confirm your new password.",
+                    });
+            }
+
+            if (
+                wantsPasswordChange &&
+                newPassword !==
+                confirmPassword
+            ) {
+                return res
+                    .status(400)
+                    .json({
+                        success: false,
+                        message:
+                            "New password and confirm password do not match.",
+                    });
+            }
+
+            if (
+                wantsPasswordChange &&
+                (
+                    newPassword.length < 8 ||
+                    newPassword.length > 128
+                )
+            ) {
+                return res
+                    .status(400)
+                    .json({
+                        success: false,
+                        message:
+                            "Password must be between 8 and 128 characters.",
+                    });
+            }
+
+            if (
+                wantsPasswordChange &&
+                !/[A-Za-z]/.test(
+                    newPassword
+                )
+            ) {
+                return res
+                    .status(400)
+                    .json({
+                        success: false,
+                        message:
+                            "Password must contain at least one letter.",
+                    });
+            }
+
+            if (
+                wantsPasswordChange &&
+                !/[0-9]/.test(
+                    newPassword
+                )
+            ) {
+                return res
+                    .status(400)
+                    .json({
+                        success: false,
+                        message:
+                            "Password must contain at least one number.",
+                    });
+            }
+
+            connection =
+                await db.getConnection();
+
+            await connection
+                .beginTransaction();
+
+            // ==================================
+            // CURRENT USER
+            // ==================================
+
+            const [users] =
+                await connection.execute(
+                    `
+                    SELECT
+                        id,
+                        email,
+                        password_hash,
+                        status
+                    FROM users
+                    WHERE id = ?
+                    LIMIT 1
+                    FOR UPDATE
+                    `,
+                    [userId]
+                );
+
+            if (
+                users.length === 0 ||
+                users[0].status !==
+                "active"
+            ) {
+                await connection
+                    .rollback();
+
+                connection.release();
+                connection = null;
+
+                return res
+                    .status(404)
+                    .json({
+                        success: false,
+                        message:
+                            "User account not found.",
+                    });
+            }
+
+            const user =
+                users[0];
+
+            let newPasswordHash =
+                null;
+
+            // ==================================
+            // PASSWORD CHANGE
+            // ==================================
+
+            if (wantsPasswordChange) {
+
+                /*
+                 * Existing password account:
+                 * current password required.
+                 */
+                if (
+                    user.password_hash
+                ) {
+                    if (
+                        !currentPassword
+                    ) {
+                        await connection
+                            .rollback();
+
+                        connection.release();
+                        connection = null;
+
+                        return res
+                            .status(400)
+                            .json({
+                                success:
+                                    false,
+
+                                message:
+                                    "Please enter your current password.",
+                            });
+                    }
+
+                    const passwordCorrect =
+                        await verifyPassword(
+                            currentPassword,
+                            user.password_hash
+                        );
+
+                    if (
+                        !passwordCorrect
+                    ) {
+                        await connection
+                            .rollback();
+
+                        connection.release();
+                        connection = null;
+
+                        return res
+                            .status(400)
+                            .json({
+                                success:
+                                    false,
+
+                                message:
+                                    "Current password is incorrect.",
+                            });
+                    }
+                }
+
+                /*
+                 * Google-only account:
+                 * password_hash is NULL.
+                 *
+                 * Logged-in Google session is
+                 * enough to create a password.
+                 */
+                newPasswordHash =
+                    await hashPassword(
+                        newPassword
+                    );
+            }
+
+            // ==================================
+            // UPDATE NAME
+            // ==================================
+
+            await connection.execute(
+                `
+                UPDATE users
+                SET
+                    first_name = ?,
+                    last_name = ?,
+                    updated_at =
+                        CURRENT_TIMESTAMP
+                WHERE id = ?
+                `,
+                [
+                    cleanFirstName,
+                    cleanLastName,
+                    userId,
+                ]
+            );
+
+            // ==================================
+            // UPDATE PASSWORD IF REQUESTED
+            // ==================================
+
+            if (
+                wantsPasswordChange
+            ) {
+                await connection.execute(
+                    `
+                    UPDATE users
+                    SET
+                        password_hash = ?,
+                        password_changed_at =
+                            CURRENT_TIMESTAMP,
+                        failed_login_attempts = 0,
+                        locked_until = NULL,
+                        updated_at =
+                            CURRENT_TIMESTAMP
+                    WHERE id = ?
+                    `,
+                    [
+                        newPasswordHash,
+                        userId,
+                    ]
+                );
+
+                /*
+                 * Revoke other sessions,
+                 * but keep current session alive.
+                 */
+                await connection.execute(
+                    `
+                    UPDATE auth_sessions
+                    SET revoked_at =
+                        CURRENT_TIMESTAMP
+                    WHERE
+                        user_id = ?
+                        AND id <> ?
+                        AND revoked_at IS NULL
+                    `,
+                    [
+                        userId,
+                        sessionId,
+                    ]
+                );
+            }
+
+            await connection.commit();
+
+            connection.release();
+            connection = null;
+
+            return res
+                .status(200)
+                .json({
+                    success: true,
+
+                    message:
+                        wantsPasswordChange
+                            ? "Profile and password updated successfully."
+                            : "Profile updated successfully.",
+
+                    passwordChanged:
+                        wantsPasswordChange,
+
+                    user: {
+                        firstName:
+                            cleanFirstName,
+
+                        lastName:
+                            cleanLastName,
+
+                        email:
+                            user.email,
+                    },
+                });
+
+        } catch (error) {
+            if (connection) {
+                try {
+                    await connection
+                        .rollback();
+                } catch {
+                    // ignore
+                }
+
+                connection.release();
+            }
+
+            console.error(
+                "Update profile error:",
+                error
+            );
+
+            return res
+                .status(500)
+                .json({
+                    success: false,
+                    message:
+                        "Unable to update profile right now.",
+                });
+        }
+    };

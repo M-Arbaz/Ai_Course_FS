@@ -20,6 +20,30 @@ export default function AccountPage() {
 
     const [loggingOut, setLoggingOut] =
         useState(false);
+    const [isEditing, setIsEditing] =
+        useState(false);
+
+    const [savingProfile, setSavingProfile] =
+        useState(false);
+
+    const [editFirstName, setEditFirstName] =
+        useState("");
+
+    const [editLastName, setEditLastName] =
+        useState("");
+
+    const [currentPassword, setCurrentPassword] =
+        useState("");
+
+    const [newPassword, setNewPassword] =
+        useState("");
+
+    const [confirmNewPassword, setConfirmNewPassword] =
+        useState("");
+
+    const [editMessage, setEditMessage] =
+        useState("");
+
     const profileInputRef = useRef(null);
 
     const [
@@ -232,7 +256,142 @@ export default function AccountPage() {
         };
 
 
+    const openEditProfile = () => {
+        setEditFirstName(
+            user?.firstName || ""
+        );
 
+        setEditLastName(
+            user?.lastName || ""
+        );
+
+        setCurrentPassword("");
+        setNewPassword("");
+        setConfirmNewPassword("");
+
+        setError("");
+        setEditMessage("");
+
+        setIsEditing(true);
+    };
+
+
+    const cancelEditProfile = () => {
+        setCurrentPassword("");
+        setNewPassword("");
+        setConfirmNewPassword("");
+
+        setError("");
+        setEditMessage("");
+
+        setIsEditing(false);
+    };
+
+    const handleSaveProfile =
+        async (event) => {
+            event.preventDefault();
+
+            try {
+                setSavingProfile(true);
+                setError("");
+                setEditMessage("");
+
+                const response =
+                    await fetch(
+                        `${api()}/api/auth/profile`,
+                        {
+                            method: "PATCH",
+
+                            credentials:
+                                "include",
+
+                            headers: {
+                                "Content-Type":
+                                    "application/json",
+                            },
+
+                            body:
+                                JSON.stringify({
+                                    firstName:
+                                        editFirstName,
+
+                                    lastName:
+                                        editLastName,
+
+                                    currentPassword,
+
+                                    newPassword,
+
+                                    confirmPassword:
+                                        confirmNewPassword,
+                                }),
+                        }
+                    );
+
+                const data =
+                    await response
+                        .json()
+                        .catch(() => ({}));
+
+                if (
+                    response.status === 401
+                ) {
+                    router.replace(
+                        "/login"
+                    );
+
+                    return;
+                }
+
+                if (!response.ok) {
+                    setError(
+                        data?.message ||
+                        "Unable to update profile."
+                    );
+
+                    return;
+                }
+
+                setUser(
+                    (currentUser) => ({
+                        ...currentUser,
+
+                        firstName:
+                            data.user
+                                ?.firstName ||
+                            editFirstName,
+
+                        lastName:
+                            data.user
+                                ?.lastName ||
+                            editLastName,
+                    })
+                );
+
+                setCurrentPassword("");
+                setNewPassword("");
+                setConfirmNewPassword("");
+
+                setEditMessage(
+                    data?.message ||
+                    "Profile updated successfully."
+                );
+
+                setIsEditing(false);
+
+            } catch (error) {
+                console.error(
+                    "Profile update error:",
+                    error
+                );
+
+                setError(
+                    "Unable to update profile."
+                );
+            } finally {
+                setSavingProfile(false);
+            }
+        };
 
     const handleLogout = async () => {
         try {
@@ -477,6 +636,43 @@ export default function AccountPage() {
                                                 {profileMessage}
                                             </p>
                                         )}
+                                        <button
+                                            type="button"
+                                            onClick={openEditProfile}
+                                            className="
+        mt-5
+        inline-flex
+        items-center
+        gap-2
+        rounded-xl
+        bg-white
+        px-4
+        py-2.5
+        text-sm
+        font-black
+        text-purple-700
+        shadow-sm
+        transition
+        hover:bg-purple-50
+    "
+                                        >
+                                            <svg
+                                                xmlns="http://www.w3.org/2000/svg"
+                                                width="15"
+                                                height="15"
+                                                viewBox="0 0 24 24"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                strokeWidth="2.5"
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                            >
+                                                <path d="M12 20h9" />
+                                                <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                                            </svg>
+
+                                            Edit Profile
+                                        </button>
                                     </div>
 
                                 </div>
@@ -540,6 +736,314 @@ export default function AccountPage() {
                                                 : "Logout"}
                                         </button>
                                     </div>
+                                </div>
+                                <div className="rounded-[30px] border border-purple-100 bg-white p-7 shadow-xl shadow-purple-100/40 md:p-9">
+
+                                    {!isEditing ? (
+                                        <>
+                                            <p className="text-sm font-black uppercase tracking-[0.18em] text-purple-500">
+                                                Profile Information
+                                            </p>
+
+                                            <h2 className="mt-3 text-3xl font-black text-[#21172f]">
+                                                Account Details
+                                            </h2>
+
+                                            <div className="mt-8 grid gap-5 sm:grid-cols-2">
+
+                                                <div className="rounded-2xl bg-[#f8f5ff] p-5">
+                                                    <p className="text-xs font-black uppercase tracking-wider text-purple-500">
+                                                        First Name
+                                                    </p>
+
+                                                    <p className="mt-2 font-bold text-[#21172f]">
+                                                        {user.firstName || "—"}
+                                                    </p>
+                                                </div>
+
+                                                <div className="rounded-2xl bg-[#efffd5] p-5">
+                                                    <p className="text-xs font-black uppercase tracking-wider text-[#719b18]">
+                                                        Last Name
+                                                    </p>
+
+                                                    <p className="mt-2 font-bold text-[#21172f]">
+                                                        {user.lastName || "—"}
+                                                    </p>
+                                                </div>
+
+                                                <div className="rounded-2xl bg-[#edf6ff] p-5 sm:col-span-2">
+                                                    <p className="text-xs font-black uppercase tracking-wider text-blue-500">
+                                                        Email Address
+                                                    </p>
+
+                                                    <p className="mt-2 break-all font-bold text-[#21172f]">
+                                                        {user.email}
+                                                    </p>
+                                                </div>
+                                            </div>
+
+                                            {editMessage && (
+                                                <div className="mt-6 rounded-2xl bg-green-50 px-5 py-4 text-sm font-bold text-green-700">
+                                                    {editMessage}
+                                                </div>
+                                            )}
+
+                                            <div className="mt-8 border-t border-purple-100 pt-7">
+
+                                                <button
+                                                    type="button"
+                                                    onClick={handleLogout}
+                                                    disabled={loggingOut}
+                                                    className="rounded-2xl bg-purple-600 px-6 py-3 font-bold text-white transition hover:bg-purple-700 disabled:cursor-not-allowed disabled:opacity-60"
+                                                >
+                                                    {loggingOut
+                                                        ? "Signing Out..."
+                                                        : "Logout"}
+                                                </button>
+
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <form
+                                            onSubmit={handleSaveProfile}
+                                        >
+
+                                            <p className="text-sm font-black uppercase tracking-[0.18em] text-purple-500">
+                                                Edit Profile
+                                            </p>
+
+                                            <h2 className="mt-3 text-3xl font-black text-[#21172f]">
+                                                Update your details
+                                            </h2>
+
+                                            <p className="mt-2 text-sm text-slate-500">
+                                                You can update your name,
+                                                password and profile picture.
+                                                Your email address cannot be changed.
+                                            </p>
+
+
+                                            {/* PROFILE PICTURE */}
+
+                                            <div className="mt-8 flex items-center gap-4 rounded-2xl bg-[#f8f5ff] p-5">
+
+                                                <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-purple-600 text-2xl font-black text-white">
+
+                                                    {profileImageUrl ? (
+                                                        <img
+                                                            src={profileImageUrl}
+                                                            alt="Profile"
+                                                            className="h-full w-full object-cover"
+                                                        />
+                                                    ) : (
+                                                        initial
+                                                    )}
+
+                                                </div>
+
+                                                <div>
+                                                    <p className="font-black text-[#21172f]">
+                                                        Profile Picture
+                                                    </p>
+
+                                                    <button
+                                                        type="button"
+                                                        disabled={
+                                                            uploadingProfileImage
+                                                        }
+                                                        onClick={() =>
+                                                            profileInputRef
+                                                                .current
+                                                                ?.click()
+                                                        }
+                                                        className="mt-2 text-sm font-black text-purple-600 hover:text-purple-700 disabled:opacity-50"
+                                                    >
+                                                        {uploadingProfileImage
+                                                            ? "Uploading..."
+                                                            : "Change Photo"}
+                                                    </button>
+                                                </div>
+
+                                            </div>
+
+
+                                            {/* NAME */}
+
+                                            <div className="mt-7 grid gap-5 sm:grid-cols-2">
+
+                                                <div>
+                                                    <label className="mb-2 block text-sm font-black text-[#21172f]">
+                                                        First Name
+                                                    </label>
+
+                                                    <input
+                                                        type="text"
+                                                        value={editFirstName}
+                                                        onChange={(event) =>
+                                                            setEditFirstName(
+                                                                event.target.value
+                                                            )
+                                                        }
+                                                        required
+                                                        className="w-full rounded-2xl border border-purple-100 bg-white px-4 py-3 outline-none transition focus:border-purple-400 focus:ring-4 focus:ring-purple-100"
+                                                    />
+                                                </div>
+
+
+                                                <div>
+                                                    <label className="mb-2 block text-sm font-black text-[#21172f]">
+                                                        Last Name
+                                                    </label>
+
+                                                    <input
+                                                        type="text"
+                                                        value={editLastName}
+                                                        onChange={(event) =>
+                                                            setEditLastName(
+                                                                event.target.value
+                                                            )
+                                                        }
+                                                        required
+                                                        className="w-full rounded-2xl border border-purple-100 bg-white px-4 py-3 outline-none transition focus:border-purple-400 focus:ring-4 focus:ring-purple-100"
+                                                    />
+                                                </div>
+
+                                            </div>
+
+
+                                            {/* EMAIL */}
+
+                                            <div className="mt-5">
+
+                                                <label className="mb-2 block text-sm font-black text-[#21172f]">
+                                                    Email Address
+                                                </label>
+
+                                                <input
+                                                    type="email"
+                                                    value={user.email}
+                                                    disabled
+                                                    className="w-full cursor-not-allowed rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 font-semibold text-slate-500"
+                                                />
+
+                                                <p className="mt-2 text-xs font-semibold text-slate-400">
+                                                    Email address cannot be changed.
+                                                </p>
+
+                                            </div>
+
+
+                                            {/* PASSWORD */}
+
+                                            <div className="mt-8 border-t border-purple-100 pt-7">
+
+                                                <h3 className="text-lg font-black text-[#21172f]">
+                                                    Change Password
+                                                </h3>
+
+                                                <p className="mt-1 text-sm text-slate-500">
+                                                    Leave these fields empty
+                                                    if you do not want to
+                                                    change your password.
+                                                </p>
+
+
+                                                <div className="mt-5 grid gap-5">
+
+                                                    <div>
+                                                        <label className="mb-2 block text-sm font-black text-[#21172f]">
+                                                            Current Password
+                                                        </label>
+
+                                                        <input
+                                                            type="password"
+                                                            value={currentPassword}
+                                                            onChange={(event) =>
+                                                                setCurrentPassword(
+                                                                    event.target.value
+                                                                )
+                                                            }
+                                                            autoComplete="current-password"
+                                                            className="w-full rounded-2xl border border-purple-100 px-4 py-3 outline-none transition focus:border-purple-400 focus:ring-4 focus:ring-purple-100"
+                                                        />
+                                                    </div>
+
+
+                                                    <div className="grid gap-5 sm:grid-cols-2">
+
+                                                        <div>
+                                                            <label className="mb-2 block text-sm font-black text-[#21172f]">
+                                                                New Password
+                                                            </label>
+
+                                                            <input
+                                                                type="password"
+                                                                value={newPassword}
+                                                                onChange={(event) =>
+                                                                    setNewPassword(
+                                                                        event.target.value
+                                                                    )
+                                                                }
+                                                                autoComplete="new-password"
+                                                                className="w-full rounded-2xl border border-purple-100 px-4 py-3 outline-none transition focus:border-purple-400 focus:ring-4 focus:ring-purple-100"
+                                                            />
+                                                        </div>
+
+
+                                                        <div>
+                                                            <label className="mb-2 block text-sm font-black text-[#21172f]">
+                                                                Confirm Password
+                                                            </label>
+
+                                                            <input
+                                                                type="password"
+                                                                value={
+                                                                    confirmNewPassword
+                                                                }
+                                                                onChange={(event) =>
+                                                                    setConfirmNewPassword(
+                                                                        event.target.value
+                                                                    )
+                                                                }
+                                                                autoComplete="new-password"
+                                                                className="w-full rounded-2xl border border-purple-100 px-4 py-3 outline-none transition focus:border-purple-400 focus:ring-4 focus:ring-purple-100"
+                                                            />
+                                                        </div>
+
+                                                    </div>
+                                                </div>
+                                            </div>
+
+
+                                            {/* BUTTONS */}
+
+                                            <div className="mt-8 flex flex-wrap gap-3">
+
+                                                <button
+                                                    type="submit"
+                                                    disabled={savingProfile}
+                                                    className="rounded-2xl bg-purple-600 px-6 py-3 font-black text-white transition hover:bg-purple-700 disabled:cursor-not-allowed disabled:opacity-60"
+                                                >
+                                                    {savingProfile
+                                                        ? "Saving..."
+                                                        : "Save Changes"}
+                                                </button>
+
+
+                                                <button
+                                                    type="button"
+                                                    onClick={cancelEditProfile}
+                                                    disabled={savingProfile}
+                                                    className="rounded-2xl border border-purple-200 bg-white px-6 py-3 font-black text-purple-600 transition hover:bg-purple-50 disabled:opacity-60"
+                                                >
+                                                    Cancel
+                                                </button>
+
+                                            </div>
+
+                                        </form>
+                                    )}
+
                                 </div>
                             </div>
                         )}

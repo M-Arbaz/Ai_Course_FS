@@ -19,6 +19,7 @@ import {
     resetPassword,
     googleLogin,
     uploadProfileImage,
+    updateProfile,
 } from "../Controller/controller.js";
 import db from "../DB/db.js";
 import {
@@ -96,5 +97,10 @@ router.post(
     requireAuth,
     profileImageUpload,
     uploadProfileImage
+);
+router.patch(
+    "/auth/profile",
+    requireAuth,
+    updateProfile
 );
 export default router;
