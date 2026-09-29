@@ -139,7 +139,7 @@ export default function AccountPage() {
 
             if (
                 file.size >
-                3 * 1024 * 1024
+                10 * 1024 * 1024
             ) {
                 setError(
                     "Profile image must be 3MB or smaller."
