@@ -135,7 +135,7 @@ export default function LoginPage() {
     useEffect(() => {
         const clientId =
             process.env
-                .NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+                .GOOGLE_CLIENT_ID;
 
         if (!clientId) {
             console.error(
