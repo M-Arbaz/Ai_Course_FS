@@ -636,10 +636,12 @@ export default function AccountPage() {
                                                 {profileMessage}
                                             </p>
                                         )}
-                                        <button
-                                            type="button"
-                                            onClick={openEditProfile}
-                                            className="
+
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={openEditProfile}
+                                        className="
         mt-5
         inline-flex
         items-center
@@ -655,26 +657,24 @@ export default function AccountPage() {
         transition
         hover:bg-purple-50
     "
+                                    >
+                                        <svg
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            width="15"
+                                            height="15"
+                                            viewBox="0 0 24 24"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            strokeWidth="2.5"
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
                                         >
-                                            <svg
-                                                xmlns="http://www.w3.org/2000/svg"
-                                                width="15"
-                                                height="15"
-                                                viewBox="0 0 24 24"
-                                                fill="none"
-                                                stroke="currentColor"
-                                                strokeWidth="2.5"
-                                                strokeLinecap="round"
-                                                strokeLinejoin="round"
-                                            >
-                                                <path d="M12 20h9" />
-                                                <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
-                                            </svg>
+                                            <path d="M12 20h9" />
+                                            <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                                        </svg>
 
-                                            Edit Profile
-                                        </button>
-                                    </div>
-
+                                        Edit Profile
+                                    </button>
                                 </div>
 
                                 <div className="rounded-[30px] border border-purple-100 bg-white p-7 shadow-xl shadow-purple-100/40 md:p-9">
