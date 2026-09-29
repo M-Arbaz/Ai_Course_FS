@@ -678,66 +678,6 @@ export default function AccountPage() {
                                 </div>
 
                                 <div className="rounded-[30px] border border-purple-100 bg-white p-7 shadow-xl shadow-purple-100/40 md:p-9">
-                                    <p className="text-sm font-black uppercase tracking-[0.18em] text-purple-500">
-                                        Profile Information
-                                    </p>
-
-                                    <h2 className="mt-3 text-3xl font-black text-[#21172f]">
-                                        Account Details
-                                    </h2>
-
-                                    <div className="mt-8 grid gap-5 sm:grid-cols-2">
-                                        <div className="rounded-2xl bg-[#f8f5ff] p-5">
-                                            <p className="text-xs font-black uppercase tracking-wider text-purple-500">
-                                                First Name
-                                            </p>
-
-                                            <p className="mt-2 font-bold text-[#21172f]">
-                                                {user.firstName ||
-                                                    "—"}
-                                            </p>
-                                        </div>
-
-                                        <div className="rounded-2xl bg-[#efffd5] p-5">
-                                            <p className="text-xs font-black uppercase tracking-wider text-[#719b18]">
-                                                Last Name
-                                            </p>
-
-                                            <p className="mt-2 font-bold text-[#21172f]">
-                                                {user.lastName ||
-                                                    "—"}
-                                            </p>
-                                        </div>
-
-                                        <div className="rounded-2xl bg-[#edf6ff] p-5 sm:col-span-2">
-                                            <p className="text-xs font-black uppercase tracking-wider text-blue-500">
-                                                Email Address
-                                            </p>
-
-                                            <p className="mt-2 break-all font-bold text-[#21172f]">
-                                                {user.email}
-                                            </p>
-                                        </div>
-                                    </div>
-
-                                    <div className="mt-8 border-t border-purple-100 pt-7">
-                                        <button
-                                            type="button"
-                                            onClick={
-                                                handleLogout
-                                            }
-                                            disabled={
-                                                loggingOut
-                                            }
-                                            className="rounded-2xl bg-purple-600 px-6 py-3 font-bold text-white transition hover:bg-purple-700 disabled:cursor-not-allowed disabled:opacity-60"
-                                        >
-                                            {loggingOut
-                                                ? "Signing Out..."
-                                                : "Logout"}
-                                        </button>
-                                    </div>
-                                </div>
-                                <div className="rounded-[30px] border border-purple-100 bg-white p-7 shadow-xl shadow-purple-100/40 md:p-9">
 
                                     {!isEditing ? (
                                         <>
@@ -1045,6 +985,7 @@ export default function AccountPage() {
                                     )}
 
                                 </div>
+
                             </div>
                         )}
                     </div>
