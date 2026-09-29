@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import WebsiteTranslator from "./WebsiteTranslator";
+import UserLogin from "./UserLogin";
 
 export default function Navbar() {
     const [open, setOpen] = useState(false);
@@ -55,12 +56,13 @@ export default function Navbar() {
                     <WebsiteTranslator />
 
                     {/* CTA */}
-                    <Link
-                        href="/login"
+                    <span
+
                         className="inline-flex items-center rounded-full bg-[#a3e635] px-5 py-2.5 text-sm font-bold text-[#243300] shadow-sm transition hover:-translate-y-0.5 hover:bg-[#b7ef59]"
                     >
-                        Login / Signup
-                    </Link>
+
+                        <UserLogin />
+                    </span>
                 </div>
 
                 <button
@@ -99,17 +101,16 @@ export default function Navbar() {
                         <div className="mt-2">
                             <WebsiteTranslator />
                         </div>
-                        <Link
-                            href="/login"
+                        <span
+
                             onClick={() => setOpen(false)}
                             className="mt-2 rounded-xl bg-[#a3e635] px-5 py-3 text-center font-bold text-[#263800]"
                         >
-                            Login / Signup
-                        </Link>
+                            <UserLogin />
+                        </span>
                     </div>
                 </div>
-            )
-            }
+            )}
         </header >
     );
 }
