@@ -2388,6 +2388,7 @@ export const getCurrentUser =
                        u.first_name,
                        u.last_name,
                        u.email,
+                       u.password_hash,
                        u.profile_image,
                        u.email_verified_at
                     FROM auth_sessions s
@@ -2461,6 +2462,10 @@ export const getCurrentUser =
 
                     profileImage:
                         user.profile_image || null,
+                    hasPassword:
+                        Boolean(
+                            user.password_hash
+                        ),
 
                     emailVerified:
                         Boolean(

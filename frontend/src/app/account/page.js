@@ -357,14 +357,17 @@ export default function AccountPage() {
                         ...currentUser,
 
                         firstName:
-                            data.user
-                                ?.firstName ||
+                            data.user?.firstName ||
                             editFirstName,
 
                         lastName:
-                            data.user
-                                ?.lastName ||
+                            data.user?.lastName ||
                             editLastName,
+
+                        hasPassword:
+                            data.passwordChanged
+                                ? true
+                                : currentUser.hasPassword,
                     })
                 );
 
@@ -878,36 +881,37 @@ export default function AccountPage() {
                                             <div className="mt-8 border-t border-purple-100 pt-7">
 
                                                 <h3 className="text-lg font-black text-[#21172f]">
-                                                    Change Password
+                                                    {user.hasPassword
+                                                        ? "Change Password"
+                                                        : "Set Password"}
                                                 </h3>
-
                                                 <p className="mt-1 text-sm text-slate-500">
-                                                    Leave these fields empty
-                                                    if you do not want to
-                                                    change your password.
+                                                    {user.hasPassword
+                                                        ? "Leave these fields empty if you do not want to change your password."
+                                                        : "Create a password so you can also sign in using your email and password."}
                                                 </p>
-
 
                                                 <div className="mt-5 grid gap-5">
 
-                                                    <div>
-                                                        <label className="mb-2 block text-sm font-black text-[#21172f]">
-                                                            Current Password
-                                                        </label>
+                                                    {user.hasPassword && (
+                                                        <div>
+                                                            <label className="mb-2 block text-sm font-black text-[#21172f]">
+                                                                Current Password
+                                                            </label>
 
-                                                        <input
-                                                            type="password"
-                                                            value={currentPassword}
-                                                            onChange={(event) =>
-                                                                setCurrentPassword(
-                                                                    event.target.value
-                                                                )
-                                                            }
-                                                            autoComplete="current-password"
-                                                            className="w-full rounded-2xl border border-purple-100 px-4 py-3 outline-none transition focus:border-purple-400 focus:ring-4 focus:ring-purple-100"
-                                                        />
-                                                    </div>
-
+                                                            <input
+                                                                type="password"
+                                                                value={currentPassword}
+                                                                onChange={(event) =>
+                                                                    setCurrentPassword(
+                                                                        event.target.value
+                                                                    )
+                                                                }
+                                                                autoComplete="current-password"
+                                                                className="w-full rounded-2xl border border-purple-100 px-4 py-3 outline-none transition focus:border-purple-400 focus:ring-4 focus:ring-purple-100"
+                                                            />
+                                                        </div>
+                                                    )}
 
                                                     <div className="grid gap-5 sm:grid-cols-2">
 
