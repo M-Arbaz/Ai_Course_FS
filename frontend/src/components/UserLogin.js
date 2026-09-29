@@ -83,15 +83,45 @@ export default function UserLogin() {
             ?.charAt(0)
             .toUpperCase() || "U";
 
+    const profileImageUrl =
+        user?.profileImage
+            ? user.profileImage.startsWith("http")
+                ? user.profileImage
+                : `${api()}${user.profileImage}`
+            : null;
+
     return (
         <Link
             href="/account"
             className="inline-flex items-center gap-2"
         >
-            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white/70 text-xs font-black text-purple-700">
-                {initial}
+            <span
+                className="
+        flex
+        h-8
+        w-8
+        items-center
+        justify-center
+        overflow-hidden
+        rounded-full
+        bg-white/70
+        text-xs
+        font-black
+        text-purple-700
+    "
+            >
+                {profileImageUrl ? (
+                    <img
+                        src={profileImageUrl}
+                        alt={user.firstName || "Profile"}
+                        className="h-full w-full object-cover"
+                        width={32}
+                        height={32}
+                    />
+                ) : (
+                    initial
+                )}
             </span>
-
             <span>
                 {user.firstName || "Account"}
             </span>
