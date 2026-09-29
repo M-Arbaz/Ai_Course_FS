@@ -17,7 +17,8 @@ const initialSignup = {
     password: "",
     confirmPassword: "",
 };
-
+const clid = process.env
+    .GOOGLE_CLIENT_ID;
 export default function LoginPage() {
     const router = useRouter();
     const googleButtonRef = useRef(null);
@@ -133,13 +134,12 @@ export default function LoginPage() {
     };
 
     useEffect(() => {
-        const clientId =
-            process.env
-                .GOOGLE_CLIENT_ID;
+        const clientId = clid;
+
 
         if (!clientId) {
             console.error(
-                "NEXT_PUBLIC_GOOGLE_CLIENT_ID is missing."
+                "GIID is missing."
             );
             return;
         }
