@@ -142,7 +142,7 @@ export default function AccountPage() {
                 10 * 1024 * 1024
             ) {
                 setError(
-                    "Profile image must be 3MB or smaller."
+                    "Profile image must be 10MB or smaller."
                 );
 
                 return;
@@ -214,6 +214,7 @@ export default function AccountPage() {
                 setProfileMessage(
                     "Profile picture updated successfully."
                 );
+                router.refresh();
             } catch (error) {
                 console.error(
                     "Profile image upload error:",
