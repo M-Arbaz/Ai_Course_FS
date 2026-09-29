@@ -3687,19 +3687,71 @@ export const googleLogin = async (req, res) => {
                 const existingUser =
                     emailUsers[0];
 
-                /*
-                 * Don't automatically connect
-                 * an existing password account
-                 * with Google.
-                 */
+                // ==================================
+                // SAME EMAIL + NO GOOGLE LINK YET
+                // ==================================
+                //
+                // Google ID token already verified
+                // and email_verified === true.
+                //
+                // Link Google to the EXISTING user.
+                // Password remains untouched, so the
+                // user can use BOTH login methods.
+                // ==================================
+
                 if (!existingUser.google_sub) {
-                    return res.status(409).json({
-                        success: false,
-                        code:
-                            "ACCOUNT_LINK_REQUIRED",
-                        message:
-                            "An account with this email already exists. Please sign in with your password first.",
-                    });
+                    await db.execute(
+                        `
+            UPDATE users
+            SET
+                google_sub = ?,
+                email_verified_at =
+                    COALESCE(
+                        email_verified_at,
+                        CURRENT_TIMESTAMP
+                    ),
+                updated_at =
+                    CURRENT_TIMESTAMP
+            WHERE id = ?
+            `,
+                        [
+                            googleSub,
+                            existingUser.id,
+                        ]
+                    );
+
+                    existingUser.google_sub =
+                        googleSub;
+
+                    if (
+                        !existingUser
+                            .email_verified_at
+                    ) {
+                        existingUser
+                            .email_verified_at =
+                            new Date();
+                    }
+                }
+
+                // ==================================
+                // SAFETY CHECK
+                // ==================================
+                //
+                // Same email must never silently
+                // replace a different Google account.
+                // ==================================
+
+                if (
+                    existingUser.google_sub !==
+                    googleSub
+                ) {
+                    return res
+                        .status(409)
+                        .json({
+                            success: false,
+                            message:
+                                "This email is already connected to another Google account.",
+                        });
                 }
 
                 user = existingUser;
