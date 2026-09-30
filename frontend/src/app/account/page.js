@@ -621,7 +621,7 @@ export default function AccountPage() {
                                     </h2>
 
                                     <p className="mt-2 break-all text-sm font-medium text-slate-500">
-                                        {user.email}
+                                        {user.email} -
                                         {user.emailVerified ? (
                                             <span
                                                 title="Email Verified"
