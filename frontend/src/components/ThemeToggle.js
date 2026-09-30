@@ -1,5 +1,6 @@
 "use client";
 
+import { Scale } from "lucide-react";
 import { useEffect, useState } from "react";
 
 const THEME_KEY = "ai-academy-theme";
@@ -61,6 +62,7 @@ export default function ThemeToggle() {
 
     return (
         <button
+            style={{ Scale: "0.9" }}
             type="button"
             onClick={toggleTheme}
             aria-label={
@@ -75,21 +77,21 @@ export default function ThemeToggle() {
                     : "Switch to dark mode"
             }
             className={`relative flex h-10 w-[76px] shrink-0 items-center rounded-full border p-1 shadow-sm transition-all duration-300 ${isDark
-                    ? "border-purple-500/30 bg-[#21172f]"
-                    : "border-slate-200 bg-slate-100"
+                ? "border-purple-500/30 bg-[#21172f]"
+                : "border-slate-200 bg-slate-100"
                 }`}
         >
             <span
                 className={`absolute top-1 h-8 w-8 rounded-full shadow-md transition-transform duration-300 ease-out ${isDark
-                        ? "translate-x-[34px] bg-purple-500"
-                        : "translate-x-0 bg-white"
+                    ? "translate-x-[34px] bg-purple-500"
+                    : "translate-x-0 bg-white"
                     }`}
             />
 
             <span
                 className={`relative z-10 flex h-8 w-8 items-center justify-center transition-colors duration-300 ${isDark
-                        ? "text-slate-500"
-                        : "text-amber-500"
+                    ? "text-slate-500"
+                    : "text-amber-500"
                     }`}
             >
                 <svg
@@ -115,8 +117,8 @@ export default function ThemeToggle() {
 
             <span
                 className={`relative z-10 ml-[2px] flex h-8 w-8 items-center justify-center transition-colors duration-300 ${isDark
-                        ? "text-white"
-                        : "text-slate-400"
+                    ? "text-white"
+                    : "text-slate-400"
                     }`}
             >
                 <svg
