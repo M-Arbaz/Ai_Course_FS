@@ -7,56 +7,56 @@ const categories = [
         icon: "✦",
         title: "AI Assistants",
         text: "ChatGPT, Claude, Gemini, Perplexity and more.",
-        bg: "bg-[#f1e9ff]",
+        bg: "bg-[#f1e9ff] dark:bg-[#281c36]",
         iconBg: "bg-purple-600",
     },
     {
         icon: "▶",
         title: "Video Generation",
         text: "Sora, Runway, Pika, Kling, Luma and more.",
-        bg: "bg-[#ffe8f2]",
+        bg: "bg-[#ffe8f2] dark:bg-[#2d1b29]",
         iconBg: "bg-pink-500",
     },
     {
         icon: "✺",
         title: "Graphic Designing",
         text: "Midjourney, Canva AI, Ideogram, Flux and more.",
-        bg: "bg-[#e4f3ff]",
+        bg: "bg-[#e4f3ff] dark:bg-[#172033]",
         iconBg: "bg-sky-500",
     },
     {
         icon: "</>",
         title: "AI Coding",
         text: "Cursor, Copilot, Replit, Windsurf and more.",
-        bg: "bg-[#efffd4]",
+        bg: "bg-[#efffd4] dark:bg-[#223018]",
         iconBg: "bg-lime-500",
     },
     {
         icon: "↗",
         title: "SEO & Marketing",
         text: "Use AI for smarter content, SEO and campaigns.",
-        bg: "bg-[#fff3d9]",
+        bg: "bg-[#fff3d9] dark:bg-[#302817]",
         iconBg: "bg-orange-400",
     },
     {
         icon: "▥",
         title: "Data & Analytics",
         text: "Analyze data and discover useful insights with AI.",
-        bg: "bg-[#ebe8ff]",
+        bg: "bg-[#ebe8ff] dark:bg-[#281c36]",
         iconBg: "bg-indigo-500",
     },
     {
         icon: "⚡",
         title: "Business AI",
         text: "Automate workflows and everyday business tasks.",
-        bg: "bg-[#ddfaee]",
+        bg: "bg-[#ddfaee] dark:bg-[#172a23]",
         iconBg: "bg-emerald-500",
     },
     {
         icon: "◎",
         title: "Sales AI",
         text: "Prospecting, lead generation and AI-powered sales.",
-        bg: "bg-[#ffe5ec]",
+        bg: "bg-[#ffe5ec] dark:bg-[#2d1b29]",
         iconBg: "bg-rose-500",
     },
 ];
@@ -68,7 +68,7 @@ const featuredCourses = [
         description:
             "Master 28 powerful AI tools across assistants, video, design, coding, marketing, analytics, business and sales.",
         info: "28 AI Tools",
-        bg: "bg-[#efe7ff]",
+        bg: "bg-[#efe7ff] dark:bg-[#281c36]",
         badge: "bg-purple-600 text-white",
         href: "/courses/28-days-ai-challenge",
     },
@@ -78,7 +78,7 @@ const featuredCourses = [
         description:
             "A focused learning path covering the most useful AI tools for modern digital work.",
         info: "15 AI Tools",
-        bg: "bg-[#eaffcb]",
+        bg: "bg-[#eaffcb] dark:bg-[#223018]",
         badge: "bg-[#a3e635] text-[#243500]",
         href: "/courses/15-ai-tools-program",
     },
@@ -88,7 +88,7 @@ const featuredCourses = [
         description:
             "Learn Sora, Opus Clip, Runway and Pika Labs through practical workflows.",
         info: "4 Tools",
-        bg: "bg-[#ffe7f1]",
+        bg: "bg-[#ffe7f1] dark:bg-[#2d1b29]",
         badge: "bg-pink-500 text-white",
         href: "/courses/video-generation-a",
     },
@@ -98,7 +98,7 @@ const featuredCourses = [
         description:
             "Create modern graphics using Nano Banana, Midjourney, Stable Diffusion and Canva AI.",
         info: "4 Tools",
-        bg: "bg-[#e2f4ff]",
+        bg: "bg-[#e2f4ff] dark:bg-[#172033]",
         badge: "bg-sky-500 text-white",
         href: "/courses/graphic-designing-a",
     },
@@ -108,7 +108,7 @@ const featuredCourses = [
         description:
             "Code smarter using Banana, Cursor, GitHub Copilot and Windsurf.",
         info: "4 Tools",
-        bg: "bg-[#efffd9]",
+        bg: "bg-[#efffd9] dark:bg-[#223018]",
         badge: "bg-lime-500 text-[#253300]",
         href: "/courses/ai-coding-a",
     },
@@ -118,7 +118,7 @@ const featuredCourses = [
         description:
             "Use Notion, Fireflies, Zapier and Panda AI to improve business productivity.",
         info: "4 Tools",
-        bg: "bg-[#e6e2ff]",
+        bg: "bg-[#e6e2ff] dark:bg-[#281c36]",
         badge: "bg-indigo-500 text-white",
         href: "/courses/business-ai",
     },
@@ -129,21 +129,21 @@ export default function Home() {
         <>
             <Navbar />
 
-            <main className="overflow-hidden bg-white">
+            <main className="overflow-hidden bg-white transition-colors duration-300 dark:bg-[#120d19]">
                 {/* HERO */}
                 <section className="soft-grid relative overflow-hidden">
-                    <div className="absolute -left-24 top-20 h-72 w-72 rounded-full bg-purple-200/50 blur-3xl" />
-                    <div className="absolute right-0 top-10 h-80 w-80 rounded-full bg-lime-200/50 blur-3xl" />
+                    <div className="absolute -left-24 top-20 h-72 w-72 rounded-full bg-purple-200/50 blur-3xl dark:bg-[#362447]/60" />
+                    <div className="absolute right-0 top-10 h-80 w-80 rounded-full bg-lime-200/50 blur-3xl dark:bg-[#344a22]/50" />
                     <div className="absolute bottom-0 left-1/2 h-72 w-72 rounded-full bg-pink-100/80 blur-3xl" />
 
                     <div className="relative mx-auto grid max-w-7xl items-center gap-14 px-6 py-20 lg:grid-cols-2 lg:px-8 lg:py-28">
                         <div>
-                            <div className="inline-flex items-center gap-2 rounded-full border border-purple-200 bg-white px-4 py-2 text-sm font-bold text-purple-600 shadow-sm">
+                            <div className="inline-flex items-center gap-2 rounded-full border border-purple-200 bg-white px-4 py-2 text-sm font-bold text-purple-600 shadow-sm dark:border-purple-800/60 dark:bg-[#1d1528]">
                                 <span>✨</span>
                                 Practical AI Learning
                             </div>
 
-                            <h1 className="mt-7 max-w-2xl text-5xl font-black leading-[1.05] tracking-[-0.04em] text-[#21172f] sm:text-6xl lg:text-[72px]">
+                            <h1 className="mt-7 max-w-2xl text-5xl font-black leading-[1.05] tracking-[-0.04em] text-[#21172f] dark:text-[#f8f7fb] sm:text-6xl lg:text-[72px]">
                                 Learn AI.
                                 <span className="block text-purple-600">Create Smarter.</span>
                                 <span className="relative inline-block">
@@ -152,7 +152,7 @@ export default function Home() {
                                 </span>
                             </h1>
 
-                            <p className="mt-7 max-w-xl text-lg leading-8 text-slate-600">
+                            <p className="mt-7 max-w-xl text-lg leading-8 text-slate-600 dark:text-slate-300">
                                 Learn today&rsquo;s most powerful AI tools through practical courses
                                 built for real skills, real work and real results.
                             </p>
@@ -173,14 +173,14 @@ export default function Home() {
                                 </a>
                             </div>
 
-                            <div className="mt-9 flex flex-wrap gap-3 text-sm font-semibold text-slate-500">
-                                <span className="rounded-full bg-purple-50 px-4 py-2">
+                            <div className="mt-9 flex flex-wrap gap-3 text-sm font-semibold text-slate-500 dark:text-slate-400">
+                                <span className="rounded-full bg-purple-50 px-4 py-2 dark:bg-[#241832]">
                                     ✓ Beginner Friendly
                                 </span>
-                                <span className="rounded-full bg-lime-50 px-4 py-2">
+                                <span className="rounded-full bg-lime-50 px-4 py-2 dark:bg-[#202b18]">
                                     ✓ Practical Skills
                                 </span>
-                                <span className="rounded-full bg-sky-50 px-4 py-2">
+                                <span className="rounded-full bg-sky-50 px-4 py-2 dark:bg-[#172033]">
                                     ✓ Modern AI Tools
                                 </span>
                             </div>
