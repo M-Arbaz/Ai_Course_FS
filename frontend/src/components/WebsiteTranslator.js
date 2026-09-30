@@ -276,8 +276,8 @@ export default function WebsiteTranslator() {
           gap-3
           rounded-xl
           border
-          border-gray-200
-          bg-white
+         border-gray-200 dark:border-white/15
+bg-white dark:bg-[#1d1528]
           px-3
           py-2
           shadow-sm
@@ -328,7 +328,7 @@ export default function WebsiteTranslator() {
                 </div>
 
                 {/* Selected language */}
-                <span className="flex-1 text-left text-sm font-medium text-gray-700">
+                <span className="flex-1 text-left text-sm font-medium text-gray-700 dark:text-gray-200">
                     {selected.label}
                 </span>
 
@@ -372,8 +372,8 @@ export default function WebsiteTranslator() {
             overflow-hidden
             rounded-xl
             border
-            border-gray-200
-            bg-white
+            border-gray-200 dark:border-white/15
+bg-white dark:bg-[#1d1528]
             p-1.5
             shadow-2xl
           "
@@ -404,7 +404,7 @@ export default function WebsiteTranslator() {
 
                   ${active
                                         ? "bg-indigo-50 text-indigo-600"
-                                        : "text-gray-700 hover:bg-gray-50"
+                                        : "text-gray-700 dark:text-gray-200 hover:bg-gray-50"
                                     }
                 `}
                             >
@@ -423,7 +423,7 @@ export default function WebsiteTranslator() {
 
                     ${active
                                             ? "bg-indigo-100 text-indigo-600"
-                                            : "bg-gray-100 text-gray-500"
+                                            : "bg-gray-100 dark:bg-[#21172f] text-gray-500 dark:text-gray-400"
                                         }
                   `}
                                 >
@@ -454,7 +454,7 @@ export default function WebsiteTranslator() {
                     })}
 
                     {!ready && (
-                        <div className="border-t border-gray-100 px-3 py-2 text-center text-xs text-gray-400">
+                        <div className="border-t border-gray-100 dark:border-white/10 px-3 py-2 text-center text-xs text-gray-400">
                             Translator loading...
                         </div>
                     )}

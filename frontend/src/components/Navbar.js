@@ -43,7 +43,7 @@ export default function Navbar() {
     }, [open]);
     return (
         <header
-            className={`sticky top-0 z-50 border-b border-purple-100/70 bg-white/85 shadow-[0_8px_30px_rgba(139,92,246,0.08)] backdrop-blur-xl transition-transform duration-300 ease-out will-change-transform dark:border-purple-900/40 dark:bg-[#17111f]/90 ${navVisible ? "translate-y-0" : "-translate-y-full"
+            className={`sticky top-0 z-50 border-b border-purple-100/70 bg-white/85 shadow-[0_8px_30px_rgba(139,92,246,0.08)] backdrop-blur-xl transition-transform duration-300 ease-out will-change-transform dark:border-purple-900/40 dark:bg-[#17111f]/90 dark:shadow-black/20 ${navVisible ? "translate-y-0" : "-translate-y-full"
                 }`}
         >
             <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 lg:px-8">
@@ -53,7 +53,7 @@ export default function Navbar() {
                     </div>
 
                     <div>
-                        <p className="text-[17px] font-black leading-none text-[#21172f]">
+                        <p className="text-[17px] font-black leading-none text-[#21172f] dark:text-[#f8f7fb]">
                             AI Academy
                         </p>
                         <p className="mt-1 text-[10px] font-semibold tracking-[0.18em] text-purple-500">
@@ -62,7 +62,7 @@ export default function Navbar() {
                     </div>
                 </Link>
 
-                <nav className="hidden items-center gap-8 text-sm font-semibold text-slate-600 md:flex">
+                <nav className="hidden items-center gap-8 text-sm font-semibold text-slate-600 dark:text-slate-300 md:flex">
                     <Link href="/" className="transition hover:text-purple-600">
                         Home
                     </Link>
@@ -105,15 +105,15 @@ export default function Navbar() {
                 <button
                     type="button"
                     onClick={() => setOpen(!open)}
-                    className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-50 text-xl font-bold text-purple-700 md:hidden"
+                    className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-50 text-xl font-bold text-purple-700 transition dark:bg-[#241832] dark:text-purple-300 md:hidden"
                 >
                     {open ? "×" : "☰"}
                 </button>
             </div>
 
             {open && (
-                <div className="border-t border-purple-100 bg-white px-5 py-5 md:hidden">
-                    <div className="flex flex-col gap-4 font-semibold text-slate-600">
+                <div className="border-t border-purple-100 bg-white px-5 py-5 dark:border-purple-900/50 dark:bg-[#1d1528] md:hidden">
+                    <div className="flex flex-col gap-4 font-semibold text-slate-600 dark:text-slate-300">
                         <Link href="/" onClick={() => setOpen(false)}>
                             Home
                         </Link>
@@ -139,7 +139,7 @@ export default function Navbar() {
                             <WebsiteTranslator />
                         </div>
                         <div className="mt-1 flex items-center justify-between">
-                            <span className="text-sm font-semibold text-slate-500">
+                            <span className="text-sm font-semibold text-slate-500 dark:text-slate-400">
                                 Appearance
                             </span>
 

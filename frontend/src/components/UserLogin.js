@@ -104,7 +104,7 @@ export default function UserLogin() {
         justify-center
         overflow-hidden
         rounded-full
-        bg-white/70
+        bg-white/70 dark:bg-[#1d1528]/70
         text-xs
         font-black
         text-purple-700
