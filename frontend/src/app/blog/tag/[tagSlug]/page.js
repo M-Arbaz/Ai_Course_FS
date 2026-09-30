@@ -55,7 +55,7 @@ export default async function BlogTagPage({
                     <div class="absolute -left-24 top-10 h-72 w-72 rounded-full bg-purple-200/60 blur-3xl"></div>
                     <div class="absolute right-0 top-0 h-72 w-72 rounded-full bg-lime-200/60 blur-3xl"></div>
                     <div class="absolute bottom-0 left-1/2 h-64 w-64 rounded-full bg-pink-100 blur-3xl"></div>
-                    <div className="relative mx-auto max-w-7xl px-6 py-20 text-center lg:px-8 lg:py-24">
+                    <div className="relative mx-auto max-w-7xl px-6 py-20 text-left lg:px-8 lg:py-24">
                         <p className="font-bold text-purple-600">
                             Blog Tag
                         </p>
