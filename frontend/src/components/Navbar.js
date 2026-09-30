@@ -138,6 +138,13 @@ export default function Navbar() {
                         <div className="mt-2">
                             <WebsiteTranslator />
                         </div>
+                        <div className="mt-1 flex items-center justify-between">
+                            <span className="text-sm font-semibold text-slate-500">
+                                Appearance
+                            </span>
+
+                            <ThemeToggle />
+                        </div>
                         <span
 
                             onClick={() => setOpen(false)}
@@ -145,6 +152,8 @@ export default function Navbar() {
                         >
                             <UserLogin />
                         </span>
+
+
                     </div>
                 </div>
             )}

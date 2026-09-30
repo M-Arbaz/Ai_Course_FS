@@ -135,3 +135,24 @@ a {
     padding: 0;
     color: inherit;
 }
+
+:root {
+    --background: #ffffff;
+    --surface: #ffffff;
+    --text: #21172f;
+    --muted-text: #64748b;
+    --border: #ede9fe;
+}
+
+html.dark {
+    --background: #120d19;
+    --surface: #1d1528;
+    --text: #f8f7fb;
+    --muted-text: #cbd5e1;
+    --border: #39284e;
+}
+
+body {
+    background: var(--background);
+    color: var(--text);
+}
