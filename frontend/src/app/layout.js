@@ -23,14 +23,15 @@ const themeInitScript = `
 export default function RootLayout({ children }) {
     return (
         <html lang="en" suppressHydrationWarning>
+            <head>
+                <script
+                    dangerouslySetInnerHTML={{
+                        __html: themeInitScript,
+                    }}
+                />
+            </head>
             <body>
-                <head>
-                    <script
-                        dangerouslySetInnerHTML={{
-                            __html: themeInitScript,
-                        }}
-                    />
-                </head>
+
                 {children}
                 <AiAssessmentPopup />
             </body>
