@@ -13,7 +13,7 @@ export default function AiReadinessTestPage() {
         <>
             <Navbar />
 
-            <main className="min-h-screen bg-gradient-to-b from-purple-50 via-white to-lime-50 px-4 py-10 sm:py-16">
+            <main className="soft-grid relative overflow-hidden border-b border-purple-100 lg:py-24">
                 <section className="mx-auto max-w-5xl">
 
                     <div className="mb-8 text-center">
