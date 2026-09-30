@@ -621,19 +621,59 @@ export default function AccountPage() {
                                     </h2>
 
                                     <p className="mt-2 break-all text-sm font-medium text-slate-500">
-                                        {user.email}
+                                        {user.email}   {user.emailVerified ? (
+                                            <span
+                                                title="Email Verified"
+                                                className="relative inline-flex h-9 w-9 items-center justify-center"
+                                            >
+                                                {/* Gear / seal shape */}
+                                                <span className="absolute h-7 w-7 rotate-45 rounded-[7px] bg-purple-500" />
+                                                <span className="absolute h-7 w-7 rounded-[7px] bg-purple-500" />
+
+                                                {/* Inner circle */}
+                                                <span className="relative z-10 flex h-6 w-6 items-center justify-center rounded-full bg-purple-100 text-purple-600 shadow-sm">
+                                                    <svg
+                                                        viewBox="0 0 24 24"
+                                                        fill="none"
+                                                        stroke="currentColor"
+                                                        strokeWidth="3"
+                                                        className="h-4 w-4"
+                                                        strokeLinecap="round"
+                                                        strokeLinejoin="round"
+                                                    >
+                                                        <path d="M20 6 9 17l-5-5" />
+                                                    </svg>
+                                                </span>
+                                            </span>
+                                        ) : (
+                                            <span
+                                                title="Email Not Verified"
+                                                className="relative inline-flex h-9 w-9 items-center justify-center"
+                                            >
+                                                {/* Gear / seal shape */}
+                                                <span className="absolute h-7 w-7 rotate-45 rounded-[7px] bg-red-500" />
+                                                <span className="absolute h-7 w-7 rounded-[7px] bg-red-500" />
+
+                                                {/* Inner circle */}
+                                                <span className="relative z-10 flex h-6 w-6 items-center justify-center rounded-full bg-red-100 text-red-600 shadow-sm">
+                                                    <svg
+                                                        viewBox="0 0 24 24"
+                                                        fill="none"
+                                                        stroke="currentColor"
+                                                        strokeWidth="3"
+                                                        className="h-4 w-4"
+                                                        strokeLinecap="round"
+                                                    >
+                                                        <path d="M18 6 6 18" />
+                                                        <path d="M6 6l12 12" />
+                                                    </svg>
+                                                </span>
+                                            </span>
+                                        )}
                                     </p>
 
                                     <div className="mt-5">
-                                        {user.emailVerified ? (
-                                            <span className="inline-flex rounded-full bg-[#a3e635] px-4 py-2 text-xs font-black text-[#304500]">
-                                                ✓ Email Verified
-                                            </span>
-                                        ) : (
-                                            <span className="inline-flex rounded-full bg-yellow-100 px-4 py-2 text-xs font-black text-yellow-700">
-                                                Email Not Verified
-                                            </span>
-                                        )}
+
                                         {profileMessage && (
                                             <p className="mt-4 text-sm font-bold text-green-700">
                                                 {profileMessage}
