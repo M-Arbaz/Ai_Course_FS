@@ -1,5 +1,48 @@
 @import "tailwindcss";
+
 @custom-variant dark (&:where(.dark, .dark *));
+
+
+/* =========================================================
+   ROOT THEME
+   ========================================================= */
+
+:root {
+    --background: #ffffff;
+    --surface: #ffffff;
+    --surface-soft: #fbfaff;
+    --surface-purple: #f5f1ff;
+
+    --text: #21172f;
+    --muted-text: #64748b;
+
+    --border: #ede9fe;
+    --input-bg: #ffffff;
+}
+
+html:not(.dark) {
+    color-scheme: light;
+}
+
+html.dark {
+    color-scheme: dark;
+
+    --background: #120d19;
+    --surface: #1d1528;
+    --surface-soft: #18111f;
+    --surface-purple: #241832;
+
+    --text: #f8f7fb;
+    --muted-text: #cbd5e1;
+
+    --border: #39284e;
+    --input-bg: #1a1224;
+}
+
+
+/* =========================================================
+   BASE
+   ========================================================= */
 
 * {
     box-sizing: border-box;
@@ -14,6 +57,7 @@ body {
     background: var(--background);
     color: var(--text);
     font-family: Arial, Helvetica, sans-serif;
+
     transition:
         background-color 0.3s ease,
         color 0.3s ease;
@@ -24,17 +68,463 @@ a {
     -webkit-tap-highlight-color: transparent;
 }
 
+
+/* =========================================================
+   SELECTION
+   ========================================================= */
+
 ::selection {
     background: #d8b4fe;
     color: #35105d;
 }
 
+html.dark ::selection {
+    background: #6d28d9;
+    color: #ffffff;
+}
+
+
+/* =========================================================
+   SOFT GRID
+   ========================================================= */
+
 .soft-grid {
     background-image:
-        linear-gradient(rgba(139, 92, 246, 0.04) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(139, 92, 246, 0.04) 1px, transparent 1px);
+        linear-gradient(rgba(139, 92, 246, 0.04) 1px,
+            transparent 1px),
+        linear-gradient(90deg,
+            rgba(139, 92, 246, 0.04) 1px,
+            transparent 1px);
+
     background-size: 32px 32px;
 }
+
+html.dark .soft-grid {
+    background-image:
+        linear-gradient(rgba(167, 139, 250, 0.06) 1px,
+            transparent 1px),
+        linear-gradient(90deg,
+            rgba(167, 139, 250, 0.06) 1px,
+            transparent 1px);
+}
+
+
+/* =========================================================
+   GLOBAL DARK FALLBACK
+   ---------------------------------------------------------
+   IMPORTANT:
+
+   Agar component mein already:
+   dark:bg-...
+   dark:text-...
+   dark:border-...
+
+   diya hua hai to ye fallback usko override NAHI karega.
+   ========================================================= */
+
+
+/* =========================================================
+   WHITE / NEUTRAL BACKGROUNDS
+   ========================================================= */
+
+html.dark :where([class~="bg-white"]:not([class*="dark:bg-"])) {
+    background-color: #1d1528;
+}
+
+html.dark :where([class~="bg-white/85"]:not([class*="dark:bg-"])) {
+    background-color: rgb(29 21 40 / 0.9);
+}
+
+html.dark :where([class~="bg-white/80"]:not([class*="dark:bg-"])) {
+    background-color: rgb(29 21 40 / 0.82);
+}
+
+html.dark :where([class~="bg-white/75"]:not([class*="dark:bg-"])) {
+    background-color: rgb(29 21 40 / 0.78);
+}
+
+html.dark :where([class~="bg-white/70"]:not([class*="dark:bg-"])) {
+    background-color: rgb(29 21 40 / 0.72);
+}
+
+html.dark :where([class~="bg-slate-50"]:not([class*="dark:bg-"]),
+    [class~="bg-gray-50"]:not([class*="dark:bg-"])) {
+    background-color: #17111f;
+}
+
+html.dark :where([class~="bg-slate-100"]:not([class*="dark:bg-"]),
+    [class~="bg-gray-100"]:not([class*="dark:bg-"]),
+    [class~="bg-gray-200"]:not([class*="dark:bg-"])) {
+    background-color: #21172f;
+}
+
+
+/* =========================================================
+   TAILWIND PASTEL BACKGROUNDS
+   ========================================================= */
+
+/* PURPLE */
+
+html.dark :where([class~="bg-purple-50"]:not([class*="dark:bg-"]),
+    [class~="bg-violet-50"]:not([class*="dark:bg-"])) {
+    background-color: #241832;
+}
+
+html.dark :where([class~="bg-purple-100"]:not([class*="dark:bg-"])) {
+    background-color: #2a1d38;
+}
+
+html.dark :where([class~="bg-purple-200"]:not([class*="dark:bg-"])) {
+    background-color: #352348;
+}
+
+
+/* BLUE / SKY */
+
+html.dark :where([class~="bg-blue-50"]:not([class*="dark:bg-"]),
+    [class~="bg-sky-50"]:not([class*="dark:bg-"])) {
+    background-color: #172033;
+}
+
+html.dark :where([class~="bg-blue-100"]:not([class*="dark:bg-"]),
+    [class~="bg-sky-100"]:not([class*="dark:bg-"])) {
+    background-color: #192a3d;
+}
+
+
+/* PINK */
+
+html.dark :where([class~="bg-pink-50"]:not([class*="dark:bg-"])) {
+    background-color: #2d1b29;
+}
+
+html.dark :where([class~="bg-pink-100"]:not([class*="dark:bg-"])) {
+    background-color: #382031;
+}
+
+
+/* LIME */
+
+html.dark :where([class~="bg-lime-50"]:not([class*="dark:bg-"])) {
+    background-color: #202b18;
+}
+
+html.dark :where([class~="bg-lime-100"]:not([class*="dark:bg-"])) {
+    background-color: #29391d;
+}
+
+html.dark :where([class~="bg-lime-200"]:not([class*="dark:bg-"])) {
+    background-color: #314522;
+}
+
+
+/* =========================================================
+   PROJECT CUSTOM PURPLE BACKGROUNDS
+   ========================================================= */
+
+html.dark :where([class~="bg-[#f1e9ff]"]:not([class*="dark:bg-"]),
+    [class~="bg-[#f1e5ff]"]:not([class*="dark:bg-"]),
+    [class~="bg-[#efe7ff]"]:not([class*="dark:bg-"]),
+    [class~="bg-[#eee7ff]"]:not([class*="dark:bg-"]),
+    [class~="bg-[#eee5ff]"]:not([class*="dark:bg-"]),
+    [class~="bg-[#ebe8ff]"]:not([class*="dark:bg-"]),
+    [class~="bg-[#e8e5ff]"]:not([class*="dark:bg-"]),
+    [class~="bg-[#e6e2ff]"]:not([class*="dark:bg-"]),
+    [class~="bg-[#EDE9FE]"]:not([class*="dark:bg-"]),
+    [class~="bg-[#ede9fe]"]:not([class*="dark:bg-"])) {
+    background-color: #281c36;
+}
+
+
+/* =========================================================
+   PROJECT CUSTOM PINK BACKGROUNDS
+   ========================================================= */
+
+html.dark :where([class~="bg-[#ffe9f2]"]:not([class*="dark:bg-"]),
+    [class~="bg-[#ffe8f2]"]:not([class*="dark:bg-"]),
+    [class~="bg-[#ffe7f1]"]:not([class*="dark:bg-"]),
+    [class~="bg-[#ffe7f0]"]:not([class*="dark:bg-"]),
+    [class~="bg-[#ffe5ef]"]:not([class*="dark:bg-"]),
+    [class~="bg-[#ffe5ec]"]:not([class*="dark:bg-"]),
+    [class~="bg-[#ffe5ea]"]:not([class*="dark:bg-"]),
+    [class~="bg-[#ffe4ef]"]:not([class*="dark:bg-"]),
+    [class~="bg-[#FCE7F3]"]:not([class*="dark:bg-"]),
+    [class~="bg-[#fce7f3]"]:not([class*="dark:bg-"])) {
+    background-color: #2d1b29;
+}
+
+
+/* =========================================================
+   PROJECT CUSTOM BLUE BACKGROUNDS
+   ========================================================= */
+
+html.dark :where([class~="bg-[#edf6ff]"]:not([class*="dark:bg-"]),
+    [class~="bg-[#e5f6ff]"]:not([class*="dark:bg-"]),
+    [class~="bg-[#e4f3ff]"]:not([class*="dark:bg-"]),
+    [class~="bg-[#e3f4ff]"]:not([class*="dark:bg-"]),
+    [class~="bg-[#e2f4ff]"]:not([class*="dark:bg-"]),
+    [class~="bg-[#e0f4ff]"]:not([class*="dark:bg-"]),
+    [class~="bg-[#dff3ff]"]:not([class*="dark:bg-"]),
+    [class~="bg-[#ddf3ff]"]:not([class*="dark:bg-"]),
+    [class~="bg-[#DBEAFE]"]:not([class*="dark:bg-"]),
+    [class~="bg-[#dbeafe]"]:not([class*="dark:bg-"])) {
+    background-color: #172033;
+}
+
+
+/* =========================================================
+   PROJECT CUSTOM LIME BACKGROUNDS
+   ========================================================= */
+
+html.dark :where([class~="bg-[#f0ffd9]"]:not([class*="dark:bg-"]),
+    [class~="bg-[#efffd9]"]:not([class*="dark:bg-"]),
+    [class~="bg-[#efffd8]"]:not([class*="dark:bg-"]),
+    [class~="bg-[#efffd5]"]:not([class*="dark:bg-"]),
+    [class~="bg-[#efffd4]"]:not([class*="dark:bg-"]),
+    [class~="bg-[#edffc9]"]:not([class*="dark:bg-"]),
+    [class~="bg-[#eaffcb]"]:not([class*="dark:bg-"]),
+    [class~="bg-[#eaffbf]"]:not([class*="dark:bg-"]),
+    [class~="bg-[#e9ffd0]"]:not([class*="dark:bg-"])) {
+    background-color: #223018;
+}
+
+
+/* =========================================================
+   PROJECT CUSTOM GREEN BACKGROUNDS
+   ========================================================= */
+
+html.dark :where([class~="bg-[#ddfaee]"]:not([class*="dark:bg-"]),
+    [class~="bg-[#e1f9ed]"]:not([class*="dark:bg-"])) {
+    background-color: #172a23;
+}
+
+
+/* =========================================================
+   PROJECT CUSTOM ORANGE BACKGROUNDS
+   ========================================================= */
+
+html.dark :where([class~="bg-[#fff3d9]"]:not([class*="dark:bg-"]),
+    [class~="bg-[#fff1d8]"]:not([class*="dark:bg-"])) {
+    background-color: #302817;
+}
+
+
+/* =========================================================
+   LIGHT SECTION BACKGROUNDS
+   ========================================================= */
+
+html.dark :where([class~="bg-[#fbfaff]"]:not([class*="dark:bg-"]),
+    [class~="bg-[#faf9ff]"]:not([class*="dark:bg-"]),
+    [class~="bg-[#f8f5ff]"]:not([class*="dark:bg-"]),
+    [class~="bg-[#F8F5FF]"]:not([class*="dark:bg-"])) {
+    background-color: #18111f;
+}
+
+html.dark :where([class~="bg-[#f5f1ff]"]:not([class*="dark:bg-"])) {
+    background-color: #241832;
+}
+
+
+/* =========================================================
+   PRIMARY TEXT
+   ========================================================= */
+
+html.dark :where([class~="text-[#21172f]"]:not([class*="dark:text-"]),
+    [class~="text-[#191724]"]:not([class*="dark:text-"]),
+    [class~="text-[#30243d]"]:not([class*="dark:text-"]),
+    [class~="text-[#30253d]"]:not([class*="dark:text-"]),
+    [class~="text-[#31243d]"]:not([class*="dark:text-"]),
+    [class~="text-[#312540]"]:not([class*="dark:text-"]),
+    [class~="text-[#312047]"]:not([class*="dark:text-"]),
+    [class~="text-[#332146]"]:not([class*="dark:text-"]),
+    [class~="text-[#352148]"]:not([class*="dark:text-"]),
+    [class~="text-[#282031]"]:not([class*="dark:text-"]),
+    [class~="text-[#292032]"]:not([class*="dark:text-"]),
+    [class~="text-[#262030]"]:not([class*="dark:text-"])) {
+    color: #f8f7fb;
+}
+
+
+/* =========================================================
+   STANDARD DARK TEXT
+   ========================================================= */
+
+html.dark :where([class~="text-slate-950"]:not([class*="dark:text-"]),
+    [class~="text-slate-900"]:not([class*="dark:text-"]),
+    [class~="text-slate-800"]:not([class*="dark:text-"]),
+    [class~="text-slate-700"]:not([class*="dark:text-"]),
+    [class~="text-gray-700"]:not([class*="dark:text-"])) {
+    color: #f1f5f9;
+}
+
+html.dark :where([class~="text-slate-600"]:not([class*="dark:text-"])) {
+    color: #cbd5e1;
+}
+
+html.dark :where([class~="text-slate-500"]:not([class*="dark:text-"]),
+    [class~="text-gray-500"]:not([class*="dark:text-"])) {
+    color: #a8b3c5;
+}
+
+html.dark :where([class~="text-slate-400"]:not([class*="dark:text-"]),
+    [class~="text-gray-400"]:not([class*="dark:text-"])) {
+    color: #94a3b8;
+}
+
+
+/* =========================================================
+   PURPLE / MUTED CUSTOM TEXT
+   ========================================================= */
+
+html.dark :where([class~="text-[#6f5c85]"]:not([class*="dark:text-"]),
+    [class~="text-[#756384]"]:not([class*="dark:text-"]),
+    [class~="text-[#776487]"]:not([class*="dark:text-"])) {
+    color: #cbbdd7;
+}
+
+
+/* =========================================================
+   PINK CUSTOM TEXT
+   ========================================================= */
+
+html.dark :where([class~="text-[#512535]"]:not([class*="dark:text-"]),
+    [class~="text-[#4c2634]"]:not([class*="dark:text-"]),
+    [class~="text-[#4a2735]"]:not([class*="dark:text-"])) {
+    color: #fbcfe8;
+}
+
+html.dark :where([class~="text-[#81616d]"]:not([class*="dark:text-"]),
+    [class~="text-[#84646f]"]:not([class*="dark:text-"])) {
+    color: #ddb9c8;
+}
+
+
+/* =========================================================
+   BLUE CUSTOM TEXT
+   ========================================================= */
+
+html.dark :where([class~="text-[#17334a]"]:not([class*="dark:text-"]),
+    [class~="text-[#20384b]"]:not([class*="dark:text-"])) {
+    color: #bfdbfe;
+}
+
+html.dark :where([class~="text-[#627686]"]:not([class*="dark:text-"])) {
+    color: #bfd0dd;
+}
+
+
+/* =========================================================
+   GREEN / LIME CUSTOM TEXT
+   ========================================================= */
+
+/*
+   IMPORTANT:
+   Bright lime buttons ke dark text ko intentionally
+   change NAHI kar rahe.
+
+   Example:
+   text-[#243300]
+   text-[#263800]
+   text-[#273700]
+   text-[#283900]
+
+   ye lime CTA par dark hi rehna chahiye.
+*/
+
+html.dark :where([class~="text-[#263315]"]:not([class*="dark:text-"]),
+    [class~="text-[#293714]"]:not([class*="dark:text-"]),
+    [class~="text-[#293712]"]:not([class*="dark:text-"]),
+    [class~="text-[#2c3918]"]:not([class*="dark:text-"])) {
+    color: #d9f99d;
+}
+
+html.dark :where([class~="text-[#66851c]"]:not([class*="dark:text-"]),
+    [class~="text-[#719b18]"]:not([class*="dark:text-"]),
+    [class~="text-[#739c20]"]:not([class*="dark:text-"]),
+    [class~="text-[#557b00]"]:not([class*="dark:text-"]),
+    [class~="text-[#82b11a]"]:not([class*="dark:text-"])) {
+    color: #bef264;
+}
+
+html.dark :where([class~="text-[#69764e]"]:not([class*="dark:text-"]),
+    [class~="text-[#69774d]"]:not([class*="dark:text-"]),
+    [class~="text-[#68764d]"]:not([class*="dark:text-"])) {
+    color: #c8d6a9;
+}
+
+
+/* =========================================================
+   BORDERS
+   ========================================================= */
+
+html.dark :where([class~="border-purple-100"]:not([class*="dark:border-"]),
+    [class~="border-purple-200"]:not([class*="dark:border-"]),
+    [class~="border-violet-100"]:not([class*="dark:border-"]),
+    [class~="border-slate-100"]:not([class*="dark:border-"]),
+    [class~="border-slate-200"]:not([class*="dark:border-"]),
+    [class~="border-gray-100"]:not([class*="dark:border-"]),
+    [class~="border-gray-200"]:not([class*="dark:border-"]),
+    [class~="border-[#EDE9FE]"]:not([class*="dark:border-"]),
+    [class~="border-[#eee5ff]"]:not([class*="dark:border-"])) {
+    border-color: #39284e;
+}
+
+html.dark :where([class~="border-purple-100/70"]:not([class*="dark:border-"])) {
+    border-color: rgb(139 92 246 / 0.25);
+}
+
+
+/* =========================================================
+   FORM CONTROLS
+   ========================================================= */
+
+html.dark input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="button"]):not([type="submit"]):not([type="reset"]):not([class*="dark:bg-"]),
+html.dark textarea:not([class*="dark:bg-"]),
+html.dark select:not([class*="dark:bg-"]) {
+    background-color: var(--input-bg);
+}
+
+html.dark input:not([class*="dark:text-"]),
+html.dark textarea:not([class*="dark:text-"]),
+html.dark select:not([class*="dark:text-"]) {
+    color: var(--text);
+}
+
+html.dark input:not([class*="dark:border-"]),
+html.dark textarea:not([class*="dark:border-"]),
+html.dark select:not([class*="dark:border-"]) {
+    border-color: var(--border);
+}
+
+html.dark input::placeholder,
+html.dark textarea::placeholder {
+    color: #94a3b8;
+}
+
+html.dark input:disabled,
+html.dark textarea:disabled,
+html.dark select:disabled {
+    opacity: 0.75;
+}
+
+
+/* =========================================================
+   COMMON HOVER FALLBACKS
+   ========================================================= */
+
+html.dark :where([class~="hover:bg-purple-50"]:not([class*="dark:hover:bg-"]):hover) {
+    background-color: #241832;
+}
+
+html.dark :where([class~="hover:bg-slate-50"]:not([class*="dark:hover:bg-"]):hover,
+    [class~="hover:bg-gray-50"]:not([class*="dark:hover:bg-"]):hover) {
+    background-color: #21172f;
+}
+
+
+/* =========================================================
+   BLOG CONTENT - LIGHT MODE
+   ========================================================= */
 
 .blog-content {
     color: #475569;
@@ -140,63 +630,10 @@ a {
     color: inherit;
 }
 
-:root {
-    --background: #ffffff;
-    --surface: #ffffff;
-    --surface-soft: #f8fafc;
-    --surface-purple: #f5f3ff;
 
-    --text: #21172f;
-    --muted-text: #64748b;
-
-    --border: #ede9fe;
-    --input-bg: #ffffff;
-}
-
-html:not(.dark) {
-    color-scheme: light;
-}
-
-html.dark {
-    color-scheme: dark;
-
-    --background: #120d19;
-    --surface: #1d1528;
-    --surface-soft: #18111f;
-    --surface-purple: #241832;
-
-    --text: #f8f7fb;
-    --muted-text: #cbd5e1;
-
-    --border: #39284e;
-    --input-bg: #1a1224;
-}
-
-
-
-/* Form controls */
-html.dark input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
-html.dark textarea,
-html.dark select {
-    color-scheme: dark;
-}
-
-html.dark input::placeholder,
-html.dark textarea::placeholder {
-    color: #94a3b8;
-}
-
-
-/* Soft grid */
-
-html.dark .soft-grid {
-    background-image:
-        linear-gradient(rgba(167, 139, 250, 0.06) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(167, 139, 250, 0.06) 1px, transparent 1px);
-}
-
-
-/* Blog dark mode */
+/* =========================================================
+   BLOG CONTENT - DARK MODE
+   ========================================================= */
 
 html.dark .blog-content {
     color: #cbd5e1;
@@ -206,6 +643,10 @@ html.dark .blog-content h2,
 html.dark .blog-content h3,
 html.dark .blog-content strong {
     color: #f8f7fb;
+}
+
+html.dark .blog-content a {
+    color: #c4b5fd;
 }
 
 html.dark .blog-content blockquote {
@@ -224,14 +665,11 @@ html.dark .blog-content pre {
     color: #f8fafc;
 }
 
-html.dark .blog-content hr {
-    border-top-color: #39284e;
+html.dark .blog-content pre code {
+    background: transparent;
+    color: inherit;
 }
 
-
-/* Selection */
-
-html.dark ::selection {
-    background: #6d28d9;
-    color: #ffffff;
+html.dark .blog-content hr {
+    border-top-color: #39284e;
 }
