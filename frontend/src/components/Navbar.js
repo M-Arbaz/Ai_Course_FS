@@ -43,7 +43,7 @@ export default function Navbar() {
     }, [open]);
     return (
         <header
-            className={`sticky top-0 z-50 border-b border-purple-100/70 bg-white/85 shadow-[0_8px_30px_rgba(139,92,246,0.08)] backdrop-blur-xl transition-transform duration-300 ease-out will-change-transform ${navVisible ? "translate-y-0" : "-translate-y-full"
+            className={`sticky top-0 z-50 border-b border-purple-100/70 bg-white/85 shadow-[0_8px_30px_rgba(139,92,246,0.08)] backdrop-blur-xl transition-transform duration-300 ease-out will-change-transform dark:border-purple-900/40 dark:bg-[#17111f]/90 ${navVisible ? "translate-y-0" : "-translate-y-full"
                 }`}
         >
             <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 lg:px-8">

@@ -5,11 +5,31 @@ export const metadata = {
     description:
         "Practical AI courses in AI assistants, video generation, design, coding, marketing, analytics, business and sales.",
 };
+const themeInitScript = `
+(function () {
+    try {
+        var savedTheme = localStorage.getItem("ai-academy-theme");
 
+        if (savedTheme === "dark") {
+            document.documentElement.classList.add("dark");
+        } else {
+            document.documentElement.classList.remove("dark");
+        }
+    } catch (error) {
+        document.documentElement.classList.remove("dark");
+    }
+})();
+`;
 export default function RootLayout({ children }) {
     return (
-        <html lang="en">
-            <body>{children}
+        <html lang="en" suppressHydrationWarning>
+            <body>
+                <script
+                    dangerouslySetInnerHTML={{
+                        __html: themeInitScript,
+                    }}
+                />
+                {children}
                 <AiAssessmentPopup />
             </body>
         </html>

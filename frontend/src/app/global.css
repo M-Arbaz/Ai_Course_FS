@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
 
 * {
     box-sizing: border-box;
@@ -10,9 +11,12 @@ html {
 
 body {
     margin: 0;
-    background: #ffffff;
-    color: #191724;
+    background: var(--background);
+    color: var(--text);
     font-family: Arial, Helvetica, sans-serif;
+    transition:
+        background-color 0.3s ease,
+        color 0.3s ease;
 }
 
 button,
@@ -139,20 +143,188 @@ a {
 :root {
     --background: #ffffff;
     --surface: #ffffff;
+    --surface-soft: #f8fafc;
+    --surface-purple: #f5f3ff;
+
     --text: #21172f;
     --muted-text: #64748b;
+
     --border: #ede9fe;
+    --input-bg: #ffffff;
+}
+
+html:not(.dark) {
+    color-scheme: light;
 }
 
 html.dark {
+    color-scheme: dark;
+
     --background: #120d19;
     --surface: #1d1528;
+    --surface-soft: #18111f;
+    --surface-purple: #241832;
+
     --text: #f8f7fb;
     --muted-text: #cbd5e1;
+
     --border: #39284e;
+    --input-bg: #1a1224;
 }
 
-body {
-    background: var(--background);
+
+/* ========================================
+   GLOBAL DARK MODE BRIDGE
+   Existing Tailwind light classes
+   ======================================== */
+
+html.dark [class~="bg-white"] {
+    background-color: var(--surface);
+}
+
+html.dark [class~="bg-white/85"] {
+    background-color: rgb(29 21 40 / 0.9);
+}
+
+html.dark [class~="bg-slate-50"] {
+    background-color: #17111f;
+}
+
+html.dark [class~="bg-slate-100"] {
+    background-color: #21172f;
+}
+
+html.dark [class~="bg-purple-50"],
+html.dark [class~="bg-violet-50"] {
+    background-color: #241832;
+}
+
+html.dark [class~="bg-blue-50"] {
+    background-color: #172033;
+}
+
+html.dark [class~="bg-pink-50"] {
+    background-color: #2b1927;
+}
+
+
+/* Existing project custom light colors */
+
+html.dark [class~="bg-[#EDE9FE]"],
+html.dark [class~="bg-[#ede9fe]"] {
+    background-color: #281c36;
+}
+
+html.dark [class~="bg-[#DBEAFE]"],
+html.dark [class~="bg-[#dbeafe]"] {
+    background-color: #182438;
+}
+
+html.dark [class~="bg-[#FCE7F3]"],
+html.dark [class~="bg-[#fce7f3]"] {
+    background-color: #2d1b29;
+}
+
+
+/* Main text */
+
+html.dark [class~="text-[#21172f]"],
+html.dark [class~="text-[#191724]"],
+html.dark [class~="text-slate-950"],
+html.dark [class~="text-slate-900"],
+html.dark [class~="text-slate-800"],
+html.dark [class~="text-slate-700"] {
+    color: #f8f7fb;
+}
+
+
+/* Secondary text */
+
+html.dark [class~="text-slate-600"] {
+    color: #cbd5e1;
+}
+
+html.dark [class~="text-slate-500"],
+html.dark [class~="text-slate-400"] {
+    color: #94a3b8;
+}
+
+
+/* Borders */
+
+html.dark [class~="border-slate-100"],
+html.dark [class~="border-slate-200"],
+html.dark [class~="border-purple-100"],
+html.dark [class~="border-violet-100"] {
+    border-color: #39284e;
+}
+
+html.dark [class~="border-purple-100/70"] {
+    border-color: rgb(139 92 246 / 0.25);
+}
+
+
+/* Form controls */
+
+html.dark input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+html.dark textarea,
+html.dark select {
+    background-color: var(--input-bg);
     color: var(--text);
+    border-color: var(--border);
+}
+
+html.dark input::placeholder,
+html.dark textarea::placeholder {
+    color: #94a3b8;
+}
+
+
+/* Soft grid */
+
+html.dark .soft-grid {
+    background-image:
+        linear-gradient(rgba(167, 139, 250, 0.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(167, 139, 250, 0.06) 1px, transparent 1px);
+}
+
+
+/* Blog dark mode */
+
+html.dark .blog-content {
+    color: #cbd5e1;
+}
+
+html.dark .blog-content h2,
+html.dark .blog-content h3,
+html.dark .blog-content strong {
+    color: #f8f7fb;
+}
+
+html.dark .blog-content blockquote {
+    border-left-color: #a78bfa;
+    background: #241832;
+    color: #ddd6fe;
+}
+
+html.dark .blog-content code {
+    background: #2a1d38;
+    color: #d8b4fe;
+}
+
+html.dark .blog-content pre {
+    background: #0d0912;
+    color: #f8fafc;
+}
+
+html.dark .blog-content hr {
+    border-top-color: #39284e;
+}
+
+
+/* Selection */
+
+html.dark ::selection {
+    background: #6d28d9;
+    color: #ffffff;
 }
