@@ -1,15 +1,51 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import WebsiteTranslator from "./WebsiteTranslator";
 import UserLogin from "./UserLogin";
 
 export default function Navbar() {
     const [open, setOpen] = useState(false);
+    const [navVisible, setNavVisible] = useState(true);
+    const lastScrollY = useRef(0);
 
+    useEffect(() => {
+        const handleScroll = () => {
+            const currentScrollY = window.scrollY;
+
+            // Mobile menu open ho to navbar hide na ho
+            if (open) {
+                setNavVisible(true);
+                lastScrollY.current = currentScrollY;
+                return;
+            }
+
+            // Page ke top par navbar hamesha visible
+            if (currentScrollY < 80) {
+                setNavVisible(true);
+            } else if (currentScrollY > lastScrollY.current) {
+                // Scroll down -> navbar hide
+                setNavVisible(false);
+            } else {
+                // Scroll up -> navbar show
+                setNavVisible(true);
+            }
+
+            lastScrollY.current = currentScrollY;
+        };
+
+        window.addEventListener("scroll", handleScroll, { passive: true });
+
+        return () => {
+            window.removeEventListener("scroll", handleScroll);
+        };
+    }, [open]);
     return (
-        <header className="sticky top-0 z-50 border-b border-purple-100/70 bg-white/85 backdrop-blur-xl">
+        <header
+            className={`sticky top-0 z-50 border-b border-purple-100/70 bg-white/85 shadow-[0_8px_30px_rgba(139,92,246,0.08)] backdrop-blur-xl transition-transform duration-300 ease-out will-change-transform ${navVisible ? "translate-y-0" : "-translate-y-full"
+                }`}
+        >
             <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 lg:px-8">
                 <Link href="/" className="flex items-center gap-3">
                     <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-purple-500 to-violet-700 text-sm font-black text-white shadow-lg shadow-purple-200">
