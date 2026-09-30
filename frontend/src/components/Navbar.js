@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import WebsiteTranslator from "./WebsiteTranslator";
 import UserLogin from "./UserLogin";
-
+import ThemeToggle from "./ThemeToggle";
 export default function Navbar() {
     const [open, setOpen] = useState(false);
     const [navVisible, setNavVisible] = useState(true);
@@ -99,6 +99,7 @@ export default function Navbar() {
 
                         <UserLogin />
                     </span>
+                    <ThemeToggle />
                 </div>
 
                 <button
