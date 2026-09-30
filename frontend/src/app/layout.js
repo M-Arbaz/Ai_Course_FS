@@ -1,4 +1,5 @@
 import "./global.css";
+import Script from "next/script";
 import AiAssessmentPopup from "@/components/AiAssessmentPopup";
 export const metadata = {
     title: "AI Learning Academy",
@@ -23,15 +24,14 @@ const themeInitScript = `
 export default function RootLayout({ children }) {
     return (
         <html lang="en" suppressHydrationWarning>
-            <head>
-                <script
-                    dangerouslySetInnerHTML={{
-                        __html: themeInitScript,
-                    }}
-                />
-            </head>
-            <body>
 
+            <body>
+                <Script
+                    id="ai-academy-theme-init"
+                    strategy="beforeInteractive"
+                >
+                    {themeInitScript}
+                </Script>
                 {children}
                 <AiAssessmentPopup />
             </body>
