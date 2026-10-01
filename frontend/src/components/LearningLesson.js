@@ -229,7 +229,8 @@ export default function LearningLesson({
 
     useEffect(() => {
         loadLearningData();
-    }, [loadLearningData]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [courseSlug, toolSlug, lessonSlug]);
 
     // ==========================================
     // CURRENT LESSON / NAVIGATION
@@ -550,8 +551,7 @@ export default function LearningLesson({
     const lesson =
         lessonData?.lesson;
 
-    const module =
-        moduleData?.module;
+    const module = moduleData?.module;
 
     if (
         !course ||
@@ -679,22 +679,22 @@ export default function LearningLesson({
                                     "completed";
 
                                 const itemClasses = `flex w-full items-center gap-3 rounded-2xl border px-4 py-3.5 text-left transition ${isCurrent
-                                        ? "border-purple-300 bg-purple-50 dark:border-purple-700 dark:bg-purple-950/40"
-                                        : isLocked
-                                            ? "cursor-not-allowed border-transparent bg-slate-50 opacity-60 dark:bg-white/5"
-                                            : "border-transparent hover:border-purple-100 hover:bg-purple-50/70 dark:hover:border-purple-900/50 dark:hover:bg-white/5"
+                                    ? "border-purple-300 bg-purple-50 dark:border-purple-700 dark:bg-purple-950/40"
+                                    : isLocked
+                                        ? "cursor-not-allowed border-transparent bg-slate-50 opacity-60 dark:bg-white/5"
+                                        : "border-transparent hover:border-purple-100 hover:bg-purple-50/70 dark:hover:border-purple-900/50 dark:hover:bg-white/5"
                                     }`;
 
                                 const content =
                                     <>
                                         <div
                                             className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${isCompleted
-                                                    ? "bg-lime-300 text-[#21172f]"
-                                                    : isCurrent
-                                                        ? "bg-purple-600 text-white"
-                                                        : isLocked
-                                                            ? "bg-slate-200 text-slate-500 dark:bg-white/10 dark:text-slate-400"
-                                                            : "bg-purple-100 text-purple-600 dark:bg-purple-900/40 dark:text-purple-300"
+                                                ? "bg-lime-300 text-[#21172f]"
+                                                : isCurrent
+                                                    ? "bg-purple-600 text-white"
+                                                    : isLocked
+                                                        ? "bg-slate-200 text-slate-500 dark:bg-white/10 dark:text-slate-400"
+                                                        : "bg-purple-100 text-purple-600 dark:bg-purple-900/40 dark:text-purple-300"
                                                 }`}
                                         >
                                             {isCompleted ? (
@@ -1028,18 +1028,18 @@ export default function LearningLesson({
                                     {quizResult ? (
                                         <div
                                             className={`mt-7 rounded-[26px] p-7 text-center ${quizResult
-                                                    ?.result
-                                                    ?.passed
-                                                    ? "bg-lime-50 dark:bg-lime-950/20"
-                                                    : "bg-pink-50 dark:bg-pink-950/20"
+                                                ?.result
+                                                ?.passed
+                                                ? "bg-lime-50 dark:bg-lime-950/20"
+                                                : "bg-pink-50 dark:bg-pink-950/20"
                                                 }`}
                                         >
                                             <div
                                                 className={`mx-auto flex h-16 w-16 items-center justify-center rounded-full ${quizResult
-                                                        ?.result
-                                                        ?.passed
-                                                        ? "bg-lime-300 text-[#21172f]"
-                                                        : "bg-pink-500 text-white"
+                                                    ?.result
+                                                    ?.passed
+                                                    ? "bg-lime-300 text-[#21172f]"
+                                                    : "bg-pink-500 text-white"
                                                     }`}
                                             >
                                                 {quizResult
@@ -1182,14 +1182,14 @@ export default function LearningLesson({
                                                                                 )
                                                                             }
                                                                             className={`flex items-center gap-3 rounded-2xl border px-4 py-3.5 text-left font-semibold transition ${selected
-                                                                                    ? "border-purple-500 bg-purple-100 text-purple-900 dark:border-purple-400 dark:bg-purple-900/40 dark:text-white"
-                                                                                    : "border-purple-100 bg-white hover:border-purple-300 dark:border-purple-900/50 dark:bg-[#21172f] dark:hover:border-purple-700"
+                                                                                ? "border-purple-500 bg-purple-100 text-purple-900 dark:border-purple-400 dark:bg-purple-900/40 dark:text-white"
+                                                                                : "border-purple-100 bg-white hover:border-purple-300 dark:border-purple-900/50 dark:bg-[#21172f] dark:hover:border-purple-700"
                                                                                 }`}
                                                                         >
                                                                             <span
                                                                                 className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border ${selected
-                                                                                        ? "border-purple-600 bg-purple-600"
-                                                                                        : "border-slate-300 dark:border-slate-600"
+                                                                                    ? "border-purple-600 bg-purple-600"
+                                                                                    : "border-slate-300 dark:border-slate-600"
                                                                                     }`}
                                                                             >
                                                                                 {selected && (
