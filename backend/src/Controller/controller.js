@@ -608,7 +608,110 @@ export const getCourseBySlug = async (req, res) => {
     }
 };
 
+// ==========================================
+// ENROLL IN COURSE
+// ==========================================
 
+export const enrollInCourse = async (req, res) => {
+    try {
+        const { slug } = req.params;
+        const userId = req.auth.userId;
+
+        const [courses] = await db.execute(
+            `
+            SELECT
+                id,
+                slug,
+                title
+            FROM courses
+            WHERE slug = ?
+              AND is_active = 1
+            LIMIT 1
+            `,
+            [slug]
+        );
+
+        if (courses.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: "Course not found.",
+            });
+        }
+
+        const course = courses[0];
+
+        const [existingEnrollments] = await db.execute(
+            `
+            SELECT
+                id,
+                status,
+                enrolled_at,
+                completed_at
+            FROM course_enrollments
+            WHERE user_id = ?
+              AND course_id = ?
+            LIMIT 1
+            `,
+            [userId, course.id]
+        );
+
+        if (existingEnrollments.length > 0) {
+            return res.status(200).json({
+                success: true,
+                alreadyEnrolled: true,
+                message: "You are already enrolled in this course.",
+                course,
+                enrollment: existingEnrollments[0],
+            });
+        }
+
+        const [result] = await db.execute(
+            `
+            INSERT INTO course_enrollments
+                (user_id, course_id, status)
+            VALUES (?, ?, 'active')
+            `,
+            [userId, course.id]
+        );
+
+        const [enrollments] = await db.execute(
+            `
+            SELECT
+                id,
+                status,
+                enrolled_at,
+                completed_at
+            FROM course_enrollments
+            WHERE id = ?
+            LIMIT 1
+            `,
+            [result.insertId]
+        );
+
+        return res.status(201).json({
+            success: true,
+            alreadyEnrolled: false,
+            message: "Enrollment completed successfully.",
+            course,
+            enrollment: enrollments[0],
+        });
+    } catch (error) {
+        if (error?.code === "ER_DUP_ENTRY") {
+            return res.status(200).json({
+                success: true,
+                alreadyEnrolled: true,
+                message: "You are already enrolled in this course.",
+            });
+        }
+
+        console.error("Course enrollment error:", error);
+
+        return res.status(500).json({
+            success: false,
+            message: "Unable to enroll in this course right now.",
+        });
+    }
+};
 
 // ==========================================
 // AI ASSESSMENT

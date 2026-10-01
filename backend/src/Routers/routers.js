@@ -20,6 +20,7 @@ import {
     googleLogin,
     uploadProfileImage,
     updateProfile,
+    enrollInCourse,
 } from "../Controller/controller.js";
 import db from "../DB/db.js";
 import {
@@ -39,6 +40,13 @@ router.get("/test", (req, res) => {
 
 router.post("/contact", contactForm);
 router.get("/courses/:slug", getCourseBySlug);
+
+router.post(
+    "/courses/:slug/enroll",
+    requireAuth,
+    enrollInCourse
+);
+
 router.get("/courses", getCourses);
 router.get("/blogs", getBlogs);
 
