@@ -1053,6 +1053,281 @@ export const getLearningLesson = async (req, res) => {
 };
 
 // ==========================================
+// GET LESSON QUIZ
+// ==========================================
+
+export const getLessonQuiz = async (req, res) => {
+    try {
+        const userId = req.auth.userId;
+
+        const {
+            courseSlug,
+            toolSlug,
+            lessonSlug,
+        } = req.params;
+
+        // ------------------------------------------
+        // COURSE + ENROLLMENT
+        // ------------------------------------------
+
+        const [courses] = await db.execute(
+            `
+            SELECT
+                id,
+                slug,
+                title
+            FROM courses
+            WHERE slug = ?
+              AND is_active = 1
+            LIMIT 1
+            `,
+            [courseSlug]
+        );
+
+        if (courses.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: "Course not found.",
+            });
+        }
+
+        const course = courses[0];
+
+        const [enrollments] = await db.execute(
+            `
+            SELECT id
+            FROM course_enrollments
+            WHERE user_id = ?
+              AND course_id = ?
+              AND status IN ('active', 'completed')
+            LIMIT 1
+            `,
+            [userId, course.id]
+        );
+
+        if (enrollments.length === 0) {
+            return res.status(403).json({
+                success: false,
+                code: "COURSE_ENROLLMENT_REQUIRED",
+                message:
+                    "You must enroll in this course before accessing its quiz.",
+            });
+        }
+
+        // ------------------------------------------
+        // FIND REQUESTED LESSON
+        // ------------------------------------------
+
+        const [lessons] = await db.execute(
+            `
+            SELECT
+                cl.id,
+                cl.course_tool_id,
+                cl.slug,
+                cl.title,
+                cl.sort_order AS lesson_sort_order,
+
+                ct.id AS tool_id,
+                ct.tool_name,
+                ct.slug AS tool_slug,
+                ct.sort_order AS tool_sort_order
+
+            FROM course_lessons cl
+
+            INNER JOIN course_tools ct
+                ON ct.id = cl.course_tool_id
+
+            WHERE ct.course_id = ?
+              AND cl.is_active = 1
+
+            ORDER BY
+                ct.sort_order ASC,
+                ct.id ASC,
+                cl.sort_order ASC,
+                cl.id ASC
+            `,
+            [course.id]
+        );
+
+        const lessonIndex = lessons.findIndex(
+            (lesson) =>
+                lesson.tool_slug === toolSlug &&
+                lesson.slug === lessonSlug
+        );
+
+        if (lessonIndex === -1) {
+            return res.status(404).json({
+                success: false,
+                message: "Lesson not found.",
+            });
+        }
+
+        const lesson = lessons[lessonIndex];
+
+        // ------------------------------------------
+        // SAME SEQUENTIAL LOCK CHECK
+        // ------------------------------------------
+
+        if (lessonIndex > 0) {
+            const previousLesson =
+                lessons[lessonIndex - 1];
+
+            const [previousProgress] =
+                await db.execute(
+                    `
+                    SELECT status
+                    FROM user_lesson_progress
+                    WHERE user_id = ?
+                      AND lesson_id = ?
+                    LIMIT 1
+                    `,
+                    [
+                        userId,
+                        previousLesson.id,
+                    ]
+                );
+
+            const previousCompleted =
+                previousProgress.length > 0 &&
+                previousProgress[0].status ===
+                "completed";
+
+            if (!previousCompleted) {
+                return res.status(403).json({
+                    success: false,
+                    code: "LESSON_LOCKED",
+                    message:
+                        "Complete the previous lesson quiz to unlock this lesson.",
+                });
+            }
+        }
+
+        // ------------------------------------------
+        // QUIZ
+        // ------------------------------------------
+
+        const [quizzes] = await db.execute(
+            `
+            SELECT
+                id,
+                title,
+                pass_percentage
+            FROM lesson_quizzes
+            WHERE lesson_id = ?
+              AND is_active = 1
+            LIMIT 1
+            `,
+            [lesson.id]
+        );
+
+        if (quizzes.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message:
+                    "No active quiz is available for this lesson.",
+            });
+        }
+
+        const quiz = quizzes[0];
+
+        // ------------------------------------------
+        // QUESTIONS
+        // IMPORTANT:
+        // is_correct is intentionally NOT selected.
+        // ------------------------------------------
+
+        const [rows] = await db.execute(
+            `
+            SELECT
+                qq.id AS question_id,
+                qq.question_text,
+                qq.sort_order AS question_order,
+
+                qo.id AS option_id,
+                qo.option_text,
+                qo.sort_order AS option_order
+
+            FROM quiz_questions qq
+
+            INNER JOIN quiz_options qo
+                ON qo.question_id = qq.id
+
+            WHERE qq.quiz_id = ?
+              AND qq.is_active = 1
+
+            ORDER BY
+                qq.sort_order ASC,
+                qo.sort_order ASC
+            `,
+            [quiz.id]
+        );
+
+        const questionsMap = new Map();
+
+        for (const row of rows) {
+            if (!questionsMap.has(row.question_id)) {
+                questionsMap.set(
+                    row.question_id,
+                    {
+                        id: row.question_id,
+                        question:
+                            row.question_text,
+                        sortOrder:
+                            row.question_order,
+                        options: [],
+                    }
+                );
+            }
+
+            questionsMap
+                .get(row.question_id)
+                .options.push({
+                    id: row.option_id,
+                    text: row.option_text,
+                    sortOrder:
+                        row.option_order,
+                });
+        }
+
+        const questions = Array.from(
+            questionsMap.values()
+        );
+
+        return res.status(200).json({
+            success: true,
+
+            lesson: {
+                id: lesson.id,
+                slug: lesson.slug,
+                title: lesson.title,
+            },
+
+            quiz: {
+                id: quiz.id,
+                title: quiz.title,
+                passPercentage:
+                    quiz.pass_percentage,
+                questionCount:
+                    questions.length,
+                questions,
+            },
+        });
+    } catch (error) {
+        console.error(
+            "Get lesson quiz error:",
+            error
+        );
+
+        return res.status(500).json({
+            success: false,
+            message:
+                "Unable to load this quiz right now.",
+        });
+    }
+};
+
+
+// ==========================================
 // GET COURSE ENROLLMENT
 // ==========================================
 
