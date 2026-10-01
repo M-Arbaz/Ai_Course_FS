@@ -1030,6 +1030,8 @@ export const getLearningLesson = async (req, res) => {
                     ? {
                         toolSlug:
                             nextLesson.tool_slug,
+                        toolName:
+                            nextLesson.tool_name,
                         lessonSlug:
                             nextLesson.slug,
                         title:
@@ -1820,6 +1822,9 @@ export const submitLessonQuiz = async (req, res) => {
                     ? {
                         toolSlug:
                             nextLesson.tool_slug,
+
+                        toolName:
+                            nextLesson.tool_name,
 
                         lessonSlug:
                             nextLesson.slug,

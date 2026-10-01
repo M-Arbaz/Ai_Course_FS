@@ -1099,10 +1099,11 @@ export default function LearningLesson({
                                                         href={`/courses/${courseSlug}/${quizResult.nextLesson.toolSlug}/${quizResult.nextLesson.lessonSlug}`}
                                                         className="mt-6 inline-flex items-center gap-2 rounded-full bg-[#A3E635] px-7 py-3.5 font-black text-[#21172f]"
                                                     >
-                                                        Continue
-                                                        to
-                                                        Next
-                                                        Lesson
+                                                        {quizResult.nextLesson.toolSlug !== toolSlug
+                                                            ? `Continue to ${quizResult.nextLesson.toolName}`
+                                                            : "Continue to Next Lesson"}
+
+                                                        <ChevronRight size={18} />
                                                         <ChevronRight
                                                             size={
                                                                 18
@@ -1278,13 +1279,25 @@ export default function LearningLesson({
                                     />
                                 </Link>
                             )
+                        ) : module.completed &&
+                            lessonData?.navigation?.nextLesson ? (
+                            <Link
+                                href={`/courses/${courseSlug}/${lessonData.navigation.nextLesson.toolSlug}/${lessonData.navigation.nextLesson.lessonSlug}`}
+                                className="inline-flex items-center justify-center gap-3 rounded-2xl bg-[#A3E635] px-6 py-3.5 font-black text-[#21172f] transition hover:-translate-y-0.5 hover:shadow-lg"
+                            >
+                                <Trophy size={18} />
+
+                                <span>
+                                    Next Module:{" "}
+                                    {lessonData.navigation.nextLesson.toolName}
+                                </span>
+
+                                <ChevronRight size={18} />
+                            </Link>
                         ) : module.completed ? (
                             <div className="inline-flex items-center gap-2 rounded-2xl bg-lime-100 px-5 py-3.5 font-black text-lime-800 dark:bg-lime-950/30 dark:text-lime-300">
-                                <Trophy
-                                    size={18}
-                                />
-                                Module
-                                Completed
+                                <Trophy size={18} />
+                                Course Module Completed
                             </div>
                         ) : null}
                     </div>
