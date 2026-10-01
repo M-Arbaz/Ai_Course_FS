@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import api from "@/lib/api";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-
+import CourseProgressBall from "@/components/CourseProgressBall";
 const themeMap = {
     purple: {
         gradient: "from-purple-100 via-pink-50 to-blue-100",
@@ -113,6 +113,10 @@ export default async function CourseDetailPage({ params }) {
     return (
         <>
             <Navbar />
+            <CourseProgressBall
+                courseSlug={course.slug}
+                courseTitle={course.title}
+            />
             <main className="min-h-screen bg-white text-[#21172f]">
 
                 {/* HERO */}
