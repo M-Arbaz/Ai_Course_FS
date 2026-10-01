@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import api from "@/lib/api";
-
+import CourseContinueButton from "@/components/CourseContinueButton";
 export default function CourseEnrollmentForm({
     slug,
 }) {
@@ -284,13 +284,11 @@ export default function CourseEnrollmentForm({
                                     is active.
                                 </p>
                             </div>
-
-                            <Link
-                                href={`/courses/${slug}#curriculum`}
-                                className="mt-6 inline-flex rounded-full bg-[#A3E635] px-7 py-3.5 font-black text-[#21172f] transition hover:-translate-y-0.5 hover:shadow-lg"
-                            >
-                                Go to Course Curriculum →
-                            </Link>
+                            <div className="mt-6">
+                                <CourseContinueButton
+                                    courseSlug={slug}
+                                />
+                            </div>
                         </div>
                     ) : (
                         <form
