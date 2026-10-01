@@ -22,6 +22,7 @@ import {
     updateProfile,
     enrollInCourse,
     getCourseEnrollment,
+    getLearningLesson,
 } from "../Controller/controller.js";
 import db from "../DB/db.js";
 import {
@@ -47,6 +48,13 @@ router.post(
     requireAuth,
     enrollInCourse
 );
+
+router.get(
+    "/learning/courses/:courseSlug/tools/:toolSlug/lessons/:lessonSlug",
+    requireAuth,
+    getLearningLesson
+);
+
 router.get(
     "/courses/:slug/enrollment",
     requireAuth,

@@ -712,6 +712,346 @@ export const enrollInCourse = async (req, res) => {
         });
     }
 };
+
+// ==========================================
+// GET PROTECTED LEARNING LESSON
+// ==========================================
+
+export const getLearningLesson = async (req, res) => {
+    try {
+        const userId = req.auth.userId;
+
+        const {
+            courseSlug,
+            toolSlug,
+            lessonSlug,
+        } = req.params;
+
+        // ------------------------------------------
+        // COURSE
+        // ------------------------------------------
+
+        const [courses] = await db.execute(
+            `
+            SELECT
+                id,
+                slug,
+                title
+            FROM courses
+            WHERE slug = ?
+              AND is_active = 1
+            LIMIT 1
+            `,
+            [courseSlug]
+        );
+
+        if (courses.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: "Course not found.",
+            });
+        }
+
+        const course = courses[0];
+
+        // ------------------------------------------
+        // ENROLLMENT REQUIRED
+        // ------------------------------------------
+
+        const [enrollments] = await db.execute(
+            `
+            SELECT
+                id,
+                status,
+                enrolled_at,
+                completed_at
+            FROM course_enrollments
+            WHERE user_id = ?
+              AND course_id = ?
+              AND status IN ('active', 'completed')
+            LIMIT 1
+            `,
+            [userId, course.id]
+        );
+
+        if (enrollments.length === 0) {
+            return res.status(403).json({
+                success: false,
+                code: "COURSE_ENROLLMENT_REQUIRED",
+                message:
+                    "You must enroll in this course before accessing its lessons.",
+            });
+        }
+
+        // ------------------------------------------
+        // TOOL / MODULE
+        // ------------------------------------------
+
+        const [tools] = await db.execute(
+            `
+            SELECT
+                id,
+                course_id,
+                tool_name,
+                slug,
+                sort_order
+            FROM course_tools
+            WHERE course_id = ?
+              AND slug = ?
+            LIMIT 1
+            `,
+            [course.id, toolSlug]
+        );
+
+        if (tools.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: "Course module not found.",
+            });
+        }
+
+        const tool = tools[0];
+
+        // ------------------------------------------
+        // ALL COURSE LESSONS IN LEARNING ORDER
+        // ------------------------------------------
+
+        const [lessons] = await db.execute(
+            `
+            SELECT
+                cl.id,
+                cl.course_tool_id,
+                cl.slug,
+                cl.title,
+                cl.summary,
+                cl.content,
+                cl.video_url,
+                cl.sort_order AS lesson_sort_order,
+
+                ct.tool_name,
+                ct.slug AS tool_slug,
+                ct.sort_order AS tool_sort_order
+
+            FROM course_lessons cl
+
+            INNER JOIN course_tools ct
+                ON ct.id = cl.course_tool_id
+
+            WHERE ct.course_id = ?
+              AND cl.is_active = 1
+
+            ORDER BY
+                ct.sort_order ASC,
+                ct.id ASC,
+                cl.sort_order ASC,
+                cl.id ASC
+            `,
+            [course.id]
+        );
+
+        const lessonIndex = lessons.findIndex(
+            (lesson) =>
+                Number(lesson.course_tool_id) ===
+                Number(tool.id) &&
+                lesson.slug === lessonSlug
+        );
+
+        if (lessonIndex === -1) {
+            return res.status(404).json({
+                success: false,
+                message: "Lesson not found.",
+            });
+        }
+
+        const lesson = lessons[lessonIndex];
+
+        const previousLesson =
+            lessonIndex > 0
+                ? lessons[lessonIndex - 1]
+                : null;
+
+        const nextLesson =
+            lessonIndex < lessons.length - 1
+                ? lessons[lessonIndex + 1]
+                : null;
+
+        // ------------------------------------------
+        // SEQUENTIAL LOCK CHECK
+        // ------------------------------------------
+
+        if (previousLesson) {
+            const [previousProgress] =
+                await db.execute(
+                    `
+                    SELECT
+                        status,
+                        completed_at
+                    FROM user_lesson_progress
+                    WHERE user_id = ?
+                      AND lesson_id = ?
+                    LIMIT 1
+                    `,
+                    [
+                        userId,
+                        previousLesson.id,
+                    ]
+                );
+
+            const previousCompleted =
+                previousProgress.length > 0 &&
+                previousProgress[0].status ===
+                "completed";
+
+            if (!previousCompleted) {
+                return res.status(403).json({
+                    success: false,
+                    code: "LESSON_LOCKED",
+                    message:
+                        "Complete the previous lesson quiz to unlock this lesson.",
+
+                    requiredPreviousLesson: {
+                        toolSlug:
+                            previousLesson.tool_slug,
+                        lessonSlug:
+                            previousLesson.slug,
+                        title:
+                            previousLesson.title,
+                    },
+                });
+            }
+        }
+
+        // ------------------------------------------
+        // MARK LESSON AS STARTED
+        // ------------------------------------------
+
+        await db.execute(
+            `
+            INSERT IGNORE INTO user_lesson_progress
+                (
+                    user_id,
+                    lesson_id,
+                    status
+                )
+            VALUES (?, ?, 'in_progress')
+            `,
+            [userId, lesson.id]
+        );
+
+        // ------------------------------------------
+        // CURRENT PROGRESS
+        // ------------------------------------------
+
+        const [currentProgress] =
+            await db.execute(
+                `
+                SELECT
+                    status,
+                    started_at,
+                    completed_at
+                FROM user_lesson_progress
+                WHERE user_id = ?
+                  AND lesson_id = ?
+                LIMIT 1
+                `,
+                [userId, lesson.id]
+            );
+
+        // ------------------------------------------
+        // QUIZ METADATA
+        // Do NOT send correct answers here.
+        // ------------------------------------------
+
+        const [quizzes] = await db.execute(
+            `
+            SELECT
+                id,
+                title,
+                pass_percentage
+            FROM lesson_quizzes
+            WHERE lesson_id = ?
+              AND is_active = 1
+            LIMIT 1
+            `,
+            [lesson.id]
+        );
+
+        return res.status(200).json({
+            success: true,
+
+            course,
+
+            tool: {
+                id: tool.id,
+                name: tool.tool_name,
+                slug: tool.slug,
+                sortOrder: tool.sort_order,
+            },
+
+            lesson: {
+                id: lesson.id,
+                slug: lesson.slug,
+                title: lesson.title,
+                summary: lesson.summary,
+                content: lesson.content,
+                videoUrl: lesson.video_url,
+                sortOrder:
+                    lesson.lesson_sort_order,
+
+                progress:
+                    currentProgress[0] || null,
+            },
+
+            quiz:
+                quizzes.length > 0
+                    ? {
+                        id: quizzes[0].id,
+                        title:
+                            quizzes[0].title,
+                        passPercentage:
+                            quizzes[0]
+                                .pass_percentage,
+                    }
+                    : null,
+
+            navigation: {
+                previousLesson: previousLesson
+                    ? {
+                        toolSlug:
+                            previousLesson.tool_slug,
+                        lessonSlug:
+                            previousLesson.slug,
+                        title:
+                            previousLesson.title,
+                    }
+                    : null,
+
+                nextLesson: nextLesson
+                    ? {
+                        toolSlug:
+                            nextLesson.tool_slug,
+                        lessonSlug:
+                            nextLesson.slug,
+                        title:
+                            nextLesson.title,
+                    }
+                    : null,
+            },
+        });
+    } catch (error) {
+        console.error(
+            "Get learning lesson error:",
+            error
+        );
+
+        return res.status(500).json({
+            success: false,
+            message:
+                "Unable to load this lesson right now.",
+        });
+    }
+};
+
 // ==========================================
 // GET COURSE ENROLLMENT
 // ==========================================
