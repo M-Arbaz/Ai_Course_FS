@@ -459,14 +459,11 @@ export default function AccountPage() {
             <Navbar />
 
             <main className="min-h-[70vh] overflow-hidden bg-white">
-                <section className="relative overflow-hidden border-b border-purple-100">
-                    <div className="absolute -left-24 top-0 h-72 w-72 rounded-full bg-purple-200/60 blur-3xl" />
-
-                    <div className="absolute right-0 top-0 h-72 w-72 rounded-full bg-lime-200/60 blur-3xl" />
-
-                    <div className="absolute bottom-0 left-1/2 h-64 w-64 rounded-full bg-pink-100 blur-3xl" />
-
-                    <div className="relative mx-auto max-w-7xl px-6 py-16 lg:px-8">
+                <section className="soft-grid relative overflow-hidden border-b border-purple-100">
+                    <div class="absolute -left-24 top-10 h-72 w-72 rounded-full bg-purple-200/60 blur-3xl"></div>
+                    <div class="absolute right-0 top-0 h-72 w-72 rounded-full bg-lime-200/60 blur-3xl"></div>
+                    <div class="absolute bottom-0 left-1/2 h-64 w-64 rounded-full bg-pink-100 blur-3xl"></div>
+                    <div className="relative mx-auto max-w-7xl px-6 py-20 text-left lg:px-8 lg:py-24">
                         <div className="inline-flex rounded-full border border-purple-100 bg-white px-4 py-2 text-sm font-bold text-purple-600 shadow-sm">
                             My Account
                         </div>
