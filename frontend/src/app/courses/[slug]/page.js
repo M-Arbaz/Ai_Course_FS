@@ -4,6 +4,7 @@ import api from "@/lib/api";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import CourseProgressBall from "@/components/CourseProgressBall";
+import CourseContinueButton from "@/components/CourseContinueButton";
 const themeMap = {
     purple: {
         gradient: "from-purple-100 via-pink-50 to-blue-100",
@@ -189,6 +190,10 @@ export default async function CourseDetailPage({ params }) {
                                     >
                                         View Curriculum
                                     </a>
+
+                                    <CourseContinueButton
+                                        courseSlug={course.slug}
+                                    />
                                 </div>
                             </div>
 
