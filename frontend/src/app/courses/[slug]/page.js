@@ -26,7 +26,8 @@ const themeMap = {
     },
 
     pink: {
-        gradient: "from-pink-100 via-purple-50 to-orange-50",
+        gradient:
+            "from-pink-100 via-purple-50 to-orange-50 dark:from-[#3a1d30] dark:via-[#2b1d3d] dark:to-[#3a261a]",
         badge: "bg-pink-500",
     },
 
