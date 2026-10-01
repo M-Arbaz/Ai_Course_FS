@@ -6111,3 +6111,508 @@ export const updateProfile =
                 });
         }
     };
+
+
+export const getCourseLearningProgress = async (
+    req,
+    res
+) => {
+    try {
+        const userId = req.auth.userId;
+        const { courseSlug } =
+            req.params;
+
+        // =========================
+        // COURSE
+        // =========================
+
+        const [courseRows] =
+            await db.execute(
+                `
+                SELECT
+                    id,
+                    slug,
+                    title
+                FROM courses
+                WHERE slug = ?
+                LIMIT 1
+                `,
+                [courseSlug]
+            );
+
+        if (!courseRows.length) {
+            return res
+                .status(404)
+                .json({
+                    success: false,
+                    message:
+                        "Course not found.",
+                });
+        }
+
+        const course =
+            courseRows[0];
+
+        // =========================
+        // ENROLLMENT
+        // =========================
+
+        const [enrollmentRows] =
+            await db.execute(
+                `
+                SELECT
+                    id,
+                    status,
+                    enrolled_at,
+                    completed_at
+                FROM course_enrollments
+                WHERE
+                    user_id = ?
+                    AND course_id = ?
+                LIMIT 1
+                `,
+                [
+                    userId,
+                    course.id,
+                ]
+            );
+
+        if (
+            !enrollmentRows.length
+        ) {
+            return res
+                .status(403)
+                .json({
+                    success: false,
+                    code:
+                        "ENROLLMENT_REQUIRED",
+                    message:
+                        "You must enroll in this course first.",
+                });
+        }
+
+        const enrollment =
+            enrollmentRows[0];
+
+        // =========================
+        // TOOLS + LESSON PROGRESS
+        // =========================
+
+        const [rows] =
+            await db.execute(
+                `
+                SELECT
+                    ct.id
+                        AS tool_id,
+
+                    ct.tool_name
+                        AS tool_name,
+
+                    ct.slug
+                        AS tool_slug,
+
+                    ct.sort_order
+                        AS tool_sort_order,
+
+                    cl.id
+                        AS lesson_id,
+
+                    cl.slug
+                        AS lesson_slug,
+
+                    cl.title
+                        AS lesson_title,
+
+                    cl.sort_order
+                        AS lesson_sort_order,
+
+                    ulp.status
+                        AS progress_status
+
+                FROM course_tools ct
+
+                LEFT JOIN course_lessons cl
+                    ON
+                        cl.course_tool_id =
+                            ct.id
+                        AND cl.is_active = 1
+
+                LEFT JOIN user_lesson_progress ulp
+                    ON
+                        ulp.lesson_id =
+                            cl.id
+                        AND ulp.user_id = ?
+
+                WHERE
+                    ct.course_id = ?
+                    AND ct.slug IS NOT NULL
+
+                ORDER BY
+                    ct.sort_order ASC,
+                    cl.sort_order ASC,
+                    cl.id ASC
+                `,
+                [
+                    userId,
+                    course.id,
+                ]
+            );
+
+        // =========================
+        // BUILD MODULES
+        // =========================
+
+        const moduleMap =
+            new Map();
+
+        for (const row of rows) {
+            if (
+                !moduleMap.has(
+                    row.tool_id
+                )
+            ) {
+                moduleMap.set(
+                    row.tool_id,
+                    {
+                        id:
+                            row.tool_id,
+
+                        name:
+                            row.tool_name,
+
+                        slug:
+                            row.tool_slug,
+
+                        sortOrder:
+                            row.tool_sort_order,
+
+                        lessons: [],
+                    }
+                );
+            }
+
+            if (row.lesson_id) {
+                moduleMap
+                    .get(row.tool_id)
+                    .lessons.push({
+                        id:
+                            row.lesson_id,
+
+                        slug:
+                            row.lesson_slug,
+
+                        title:
+                            row.lesson_title,
+
+                        sortOrder:
+                            row.lesson_sort_order,
+
+                        progressStatus:
+                            row.progress_status,
+                    });
+            }
+        }
+
+        const modules =
+            Array.from(
+                moduleMap.values()
+            );
+
+        // =========================
+        // GLOBAL SEQUENTIAL LOCKING
+        // =========================
+
+        const allLessons = [];
+
+        for (const module of modules) {
+            for (
+                const lesson
+                of module.lessons
+            ) {
+                allLessons.push({
+                    ...lesson,
+
+                    toolId:
+                        module.id,
+
+                    toolName:
+                        module.name,
+
+                    toolSlug:
+                        module.slug,
+                });
+            }
+        }
+
+        let previousCompleted =
+            true;
+
+        for (
+            const lesson
+            of allLessons
+        ) {
+            const completed =
+                lesson.progressStatus ===
+                "completed";
+
+            if (completed) {
+                lesson.status =
+                    "completed";
+            } else if (
+                previousCompleted
+            ) {
+                lesson.status =
+                    lesson.progressStatus ===
+                        "in_progress"
+                        ? "in_progress"
+                        : "available";
+            } else {
+                lesson.status =
+                    "locked";
+            }
+
+            previousCompleted =
+                completed;
+        }
+
+        // =========================
+        // MODULE STATUS
+        // =========================
+
+        const moduleResults =
+            modules.map(
+                (module) => {
+                    const lessons =
+                        allLessons.filter(
+                            (lesson) =>
+                                lesson.toolId ===
+                                module.id
+                        );
+
+                    const totalLessons =
+                        lessons.length;
+
+                    const completedLessons =
+                        lessons.filter(
+                            (lesson) =>
+                                lesson.status ===
+                                "completed"
+                        ).length;
+
+                    const progressPercentage =
+                        totalLessons > 0
+                            ? Math.round(
+                                (
+                                    completedLessons /
+                                    totalLessons
+                                ) * 100
+                            )
+                            : 0;
+
+                    let status =
+                        "locked";
+
+                    if (
+                        totalLessons === 0
+                    ) {
+                        status =
+                            "coming_soon";
+                    } else if (
+                        completedLessons ===
+                        totalLessons
+                    ) {
+                        status =
+                            "completed";
+                    } else if (
+                        lessons.some(
+                            (lesson) =>
+                                lesson.status ===
+                                "in_progress"
+                        ) ||
+                        completedLessons >
+                        0
+                    ) {
+                        status =
+                            "in_progress";
+                    } else if (
+                        lessons.some(
+                            (lesson) =>
+                                lesson.status ===
+                                "available"
+                        )
+                    ) {
+                        status =
+                            "available";
+                    }
+
+                    const currentLesson =
+                        lessons.find(
+                            (lesson) =>
+                                lesson.status ===
+                                "in_progress" ||
+                                lesson.status ===
+                                "available"
+                        );
+
+                    return {
+                        id:
+                            module.id,
+
+                        name:
+                            module.name,
+
+                        slug:
+                            module.slug,
+
+                        sortOrder:
+                            module.sortOrder,
+
+                        status,
+
+                        totalLessons,
+
+                        completedLessons,
+
+                        progressPercentage,
+
+                        currentLesson:
+                            currentLesson
+                                ? {
+                                    id:
+                                        currentLesson.id,
+
+                                    slug:
+                                        currentLesson.slug,
+
+                                    title:
+                                        currentLesson.title,
+
+                                    path:
+                                        `/courses/${course.slug}/${module.slug}/${currentLesson.slug}`,
+                                }
+                                : null,
+                    };
+                }
+            );
+
+        // =========================
+        // OVERALL PROGRESS
+        // =========================
+
+        const totalLessons =
+            allLessons.length;
+
+        const completedLessons =
+            allLessons.filter(
+                (lesson) =>
+                    lesson.status ===
+                    "completed"
+            ).length;
+
+        const progressPercentage =
+            totalLessons > 0
+                ? Math.round(
+                    (
+                        completedLessons /
+                        totalLessons
+                    ) * 100
+                )
+                : 0;
+
+        const courseCompleted =
+            totalLessons > 0 &&
+            completedLessons ===
+            totalLessons;
+
+        const currentLesson =
+            allLessons.find(
+                (lesson) =>
+                    lesson.status ===
+                    "in_progress" ||
+                    lesson.status ===
+                    "available"
+            );
+
+        return res
+            .status(200)
+            .json({
+                success: true,
+
+                course: {
+                    id:
+                        course.id,
+
+                    slug:
+                        course.slug,
+
+                    title:
+                        course.title,
+                },
+
+                enrollment: {
+                    id:
+                        enrollment.id,
+
+                    status:
+                        enrollment.status,
+
+                    enrolledAt:
+                        enrollment.enrolled_at,
+
+                    completedAt:
+                        enrollment.completed_at,
+                },
+
+                progress: {
+                    totalLessons,
+
+                    completedLessons,
+
+                    percentage:
+                        progressPercentage,
+
+                    completed:
+                        courseCompleted,
+                },
+
+                currentLesson:
+                    currentLesson
+                        ? {
+                            id:
+                                currentLesson.id,
+
+                            title:
+                                currentLesson.title,
+
+                            lessonSlug:
+                                currentLesson.slug,
+
+                            toolName:
+                                currentLesson.toolName,
+
+                            toolSlug:
+                                currentLesson.toolSlug,
+
+                            path:
+                                `/courses/${course.slug}/${currentLesson.toolSlug}/${currentLesson.slug}`,
+                        }
+                        : null,
+
+                modules:
+                    moduleResults,
+            });
+    } catch (error) {
+        console.error(
+            "Get course learning progress error:",
+            error
+        );
+
+        return res
+            .status(500)
+            .json({
+                success: false,
+                message:
+                    "Unable to load course progress right now.",
+            });
+    }
+};

@@ -26,6 +26,7 @@ import {
     getLessonQuiz,
     submitLessonQuiz,
     getLearningModule,
+    getCourseLearningProgress,
 } from "../Controller/controller.js";
 import db from "../DB/db.js";
 import {
@@ -73,6 +74,11 @@ router.get(
     "/learning/courses/:courseSlug/tools/:toolSlug",
     requireAuth,
     getLearningModule
+);
+router.get(
+    "/learning/courses/:courseSlug/progress",
+    requireAuth,
+    getCourseLearningProgress
 );
 router.get(
     "/courses/:slug/enrollment",
