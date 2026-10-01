@@ -1862,6 +1862,289 @@ export const submitLessonQuiz = async (req, res) => {
     }
 };
 
+// ==========================================
+// GET LEARNING MODULE OVERVIEW
+// ==========================================
+
+export const getLearningModule = async (req, res) => {
+    try {
+        const userId = req.auth.userId;
+
+        const {
+            courseSlug,
+            toolSlug,
+        } = req.params;
+
+        // ------------------------------------------
+        // COURSE
+        // ------------------------------------------
+
+        const [courses] = await db.execute(
+            `
+            SELECT
+                id,
+                slug,
+                title
+            FROM courses
+            WHERE slug = ?
+              AND is_active = 1
+            LIMIT 1
+            `,
+            [courseSlug]
+        );
+
+        if (courses.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: "Course not found.",
+            });
+        }
+
+        const course = courses[0];
+
+        // ------------------------------------------
+        // ENROLLMENT REQUIRED
+        // ------------------------------------------
+
+        const [enrollments] = await db.execute(
+            `
+            SELECT
+                id,
+                status,
+                enrolled_at,
+                completed_at
+            FROM course_enrollments
+            WHERE user_id = ?
+              AND course_id = ?
+              AND status IN ('active', 'completed')
+            LIMIT 1
+            `,
+            [userId, course.id]
+        );
+
+        if (enrollments.length === 0) {
+            return res.status(403).json({
+                success: false,
+                code: "COURSE_ENROLLMENT_REQUIRED",
+                message:
+                    "You must enroll in this course before accessing its learning modules.",
+            });
+        }
+
+        // ------------------------------------------
+        // TOOL / MODULE
+        // ------------------------------------------
+
+        const [tools] = await db.execute(
+            `
+            SELECT
+                id,
+                course_id,
+                tool_name,
+                slug,
+                sort_order
+            FROM course_tools
+            WHERE course_id = ?
+              AND slug = ?
+            LIMIT 1
+            `,
+            [course.id, toolSlug]
+        );
+
+        if (tools.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: "Course module not found.",
+            });
+        }
+
+        const tool = tools[0];
+
+        // ------------------------------------------
+        // MODULE LESSONS + USER PROGRESS
+        // ------------------------------------------
+
+        const [lessons] = await db.execute(
+            `
+            SELECT
+                cl.id,
+                cl.slug,
+                cl.title,
+                cl.summary,
+                cl.sort_order,
+
+                ulp.status AS progress_status,
+                ulp.started_at,
+                ulp.completed_at,
+
+                lq.id AS quiz_id,
+                lq.title AS quiz_title,
+                lq.pass_percentage
+
+            FROM course_lessons cl
+
+            LEFT JOIN user_lesson_progress ulp
+                ON ulp.lesson_id = cl.id
+               AND ulp.user_id = ?
+
+            LEFT JOIN lesson_quizzes lq
+                ON lq.lesson_id = cl.id
+               AND lq.is_active = 1
+
+            WHERE cl.course_tool_id = ?
+              AND cl.is_active = 1
+
+            ORDER BY
+                cl.sort_order ASC,
+                cl.id ASC
+            `,
+            [userId, tool.id]
+        );
+
+        if (lessons.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message:
+                    "No active lessons are available for this module.",
+            });
+        }
+
+        // ------------------------------------------
+        // CALCULATE SEQUENTIAL LESSON STATES
+        // ------------------------------------------
+
+        let previousLessonCompleted = true;
+
+        const formattedLessons = lessons.map(
+            (lesson, index) => {
+                const completed =
+                    lesson.progress_status ===
+                    "completed";
+
+                const unlocked =
+                    index === 0 ||
+                    previousLessonCompleted;
+
+                let status = "locked";
+
+                if (completed) {
+                    status = "completed";
+                } else if (unlocked) {
+                    status =
+                        lesson.progress_status ===
+                            "in_progress"
+                            ? "in_progress"
+                            : "available";
+                }
+
+                const formattedLesson = {
+                    id: lesson.id,
+                    slug: lesson.slug,
+                    title: lesson.title,
+                    summary: lesson.summary,
+                    sortOrder:
+                        lesson.sort_order,
+
+                    status,
+                    unlocked,
+
+                    startedAt:
+                        lesson.started_at,
+                    completedAt:
+                        lesson.completed_at,
+
+                    quiz: lesson.quiz_id
+                        ? {
+                            id:
+                                lesson.quiz_id,
+                            title:
+                                lesson.quiz_title,
+                            passPercentage:
+                                lesson.pass_percentage,
+                        }
+                        : null,
+                };
+
+                previousLessonCompleted =
+                    completed;
+
+                return formattedLesson;
+            }
+        );
+
+        // ------------------------------------------
+        // MODULE PROGRESS
+        // ------------------------------------------
+
+        const totalLessons =
+            formattedLessons.length;
+
+        const completedLessons =
+            formattedLessons.filter(
+                (lesson) =>
+                    lesson.status ===
+                    "completed"
+            ).length;
+
+        const progressPercentage =
+            totalLessons > 0
+                ? Math.round(
+                    (completedLessons /
+                        totalLessons) *
+                    100
+                )
+                : 0;
+
+        // First unfinished unlocked lesson
+        const currentLesson =
+            formattedLessons.find(
+                (lesson) =>
+                    lesson.status ===
+                    "in_progress" ||
+                    lesson.status ===
+                    "available"
+            ) || null;
+
+        const moduleCompleted =
+            totalLessons > 0 &&
+            completedLessons === totalLessons;
+
+        return res.status(200).json({
+            success: true,
+
+            course,
+
+            enrollment: enrollments[0],
+
+            module: {
+                id: tool.id,
+                name: tool.tool_name,
+                slug: tool.slug,
+                sortOrder: tool.sort_order,
+
+                totalLessons,
+                completedLessons,
+                progressPercentage,
+                completed: moduleCompleted,
+
+                currentLesson,
+
+                lessons: formattedLessons,
+            },
+        });
+    } catch (error) {
+        console.error(
+            "Get learning module error:",
+            error
+        );
+
+        return res.status(500).json({
+            success: false,
+            message:
+                "Unable to load this learning module right now.",
+        });
+    }
+};
 
 // ==========================================
 // GET COURSE ENROLLMENT
