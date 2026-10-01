@@ -173,7 +173,7 @@ export default async function CourseDetailPage({ params }) {
 
                                 <div className="mt-9 flex flex-wrap gap-4">
                                     <Link
-                                        href="/contact"
+                                        href={`/courses/${course.slug}/enroll`}
                                         className="rounded-full bg-[#21172f] px-7 py-4 text-sm font-bold text-white transition hover:-translate-y-0.5 hover:shadow-xl"
                                     >
                                         Enroll Now
@@ -449,9 +449,8 @@ export default async function CourseDetailPage({ params }) {
                             Join the course and start building practical AI skills with modern
                             tools.
                         </p>
-
                         <Link
-                            href="/contact"
+                            href={`/courses/${course.slug}/enroll`}
                             className="mt-8 inline-flex rounded-full bg-[#A3E635] px-8 py-4 text-sm font-black text-[#21172f] transition hover:-translate-y-1 hover:shadow-xl"
                         >
                             Enroll in This Course

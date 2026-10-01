@@ -17,7 +17,25 @@ const initialSignup = {
     password: "",
     confirmPassword: "",
 };
+const getSafeNextPath = () => {
+    if (typeof window === "undefined") {
+        return "/";
+    }
 
+    const next = new URLSearchParams(
+        window.location.search
+    ).get("next");
+
+    if (
+        !next ||
+        !next.startsWith("/") ||
+        next.startsWith("//")
+    ) {
+        return "/";
+    }
+
+    return next;
+};
 export default function LoginPage() {
     const router = useRouter();
     const googleButtonRef = useRef(null);
@@ -88,7 +106,7 @@ export default function LoginPage() {
                         .catch(() => ({}));
 
                     if (data?.authenticated) {
-                        router.replace("/");
+                        router.replace(getSafeNextPath());
                         router.refresh();
                         return;
                     }
@@ -166,7 +184,7 @@ export default function LoginPage() {
                 "Signed in with Google successfully."
             );
 
-            router.replace("/");
+            router.replace(getSafeNextPath());
             router.refresh();
         } catch (error) {
             console.error(
@@ -345,7 +363,7 @@ export default function LoginPage() {
                 "Signed in successfully."
             );
 
-            router.replace("/");
+            router.replace(getSafeNextPath());
             router.refresh();
         } catch (error) {
             console.error("Login error:", error);
