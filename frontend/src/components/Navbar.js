@@ -111,8 +111,18 @@ export default function Navbar() {
                 </button>
             </div>
 
-            {open && (
-                <div className="border-t border-purple-100 bg-white px-5 py-5 dark:border-purple-900/50 dark:bg-[#1d1528] md:hidden">
+            <div
+                className={`overflow-hidden bg-white transition-all duration-300 ease-out dark:bg-[#1d1528] md:hidden ${open
+                        ? "max-h-[600px] border-t border-purple-100 opacity-100 dark:border-purple-900/50"
+                        : "pointer-events-none max-h-0 border-t border-transparent opacity-0"
+                    }`}
+            >
+                <div
+                    className={`px-5 transition-all duration-300 ease-out ${open
+                            ? "translate-y-0 py-5"
+                            : "-translate-y-3 py-0"
+                        }`}
+                >
                     <div className="flex flex-col gap-4 font-semibold text-slate-600 dark:text-slate-300">
                         <Link href="/" onClick={() => setOpen(false)}>
                             Home
@@ -129,15 +139,19 @@ export default function Navbar() {
                         <Link href="/#why-us" onClick={() => setOpen(false)}>
                             Why Us
                         </Link>
+
                         <Link href="/blog" onClick={() => setOpen(false)}>
                             Blog
                         </Link>
+
                         <Link href="/contact" onClick={() => setOpen(false)}>
                             Contact
                         </Link>
+
                         <div className="mt-2">
                             <WebsiteTranslator />
                         </div>
+
                         <div className="mt-1 flex items-center justify-between">
                             <span className="text-sm font-semibold text-slate-500 dark:text-slate-400">
                                 Appearance
@@ -145,18 +159,16 @@ export default function Navbar() {
 
                             <ThemeToggle />
                         </div>
-                        <span
 
+                        <span
                             onClick={() => setOpen(false)}
                             className="mt-2 rounded-xl bg-[#a3e635] px-5 py-3 text-center font-bold text-[#263800]"
                         >
                             <UserLogin />
                         </span>
-
-
                     </div>
                 </div>
-            )}
+            </div>
         </header >
     );
 }
