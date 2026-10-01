@@ -287,7 +287,7 @@ export default function CourseEnrollmentForm({
 
                             <Link
                                 href={`/courses/${slug}#curriculum`}
-                                className="mt-6 inline-flex rounded-full bg-[#A3E635] px-7 py-3.5 font-black text-[#21172f] transition hover:-translate-y-0.5 hover:shadow-lg"
+                                className="mt-6 inline-flex rounded-full bg-[#8B5CF6] px-7 py-3.5 font-black text-[#21172f] transition hover:-translate-y-0.5 hover:shadow-lg"
                             >
                                 Go to Course Curriculum →
                             </Link>
