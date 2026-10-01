@@ -485,7 +485,7 @@ export default function AccountPage() {
                 </section>
 
                 <section className="py-16">
-                    <div className="mx-auto max-w-5xl px-6 lg:px-8">
+                    <div className="mx-auto max-w-7xl px-6 lg:px-8">
                         {loading && (
                             <div className="rounded-[30px] border border-purple-100 bg-[#fbfaff] p-10 text-center shadow-sm">
                                 <p className="font-bold text-purple-600">
@@ -503,7 +503,7 @@ export default function AccountPage() {
 
                         {!loading && user && (
                             <div className="grid gap-8 lg:grid-cols-[0.7fr_1.3fr]">
-                                <div className="rounded-[30px] bg-gradient-to-br from-[#ede9fe] via-[#fce7f3] to-[#dbeafe] p-8">
+                                <div className="rounded-[30px] bg-gradient-to-br from-[#ede9fe] via-[#fce7f3] to-[#dbeafe] p-8 dark:from-[#281c36] dark:via-[#2d1b29] dark:to-[#172033]">
                                     <div className="relative w-fit">
 
                                         <div
