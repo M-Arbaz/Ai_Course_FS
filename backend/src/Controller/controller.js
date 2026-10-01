@@ -712,7 +712,77 @@ export const enrollInCourse = async (req, res) => {
         });
     }
 };
+// ==========================================
+// GET COURSE ENROLLMENT
+// ==========================================
 
+export const getCourseEnrollment = async (req, res) => {
+    try {
+        const { slug } = req.params;
+        const userId = req.auth.userId;
+
+        const [courses] = await db.execute(
+            `
+            SELECT
+                id,
+                slug,
+                title
+            FROM courses
+            WHERE slug = ?
+              AND is_active = 1
+            LIMIT 1
+            `,
+            [slug]
+        );
+
+        if (courses.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: "Course not found.",
+            });
+        }
+
+        const course = courses[0];
+
+        const [enrollments] = await db.execute(
+            `
+            SELECT
+                id,
+                status,
+                enrolled_at,
+                completed_at
+            FROM course_enrollments
+            WHERE user_id = ?
+              AND course_id = ?
+            LIMIT 1
+            `,
+            [userId, course.id]
+        );
+
+        if (enrollments.length === 0) {
+            return res.status(200).json({
+                success: true,
+                enrolled: false,
+                course,
+                enrollment: null,
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            enrolled: true,
+            course,
+            enrollment: enrollments[0],
+        });
+    } catch (error) {
+        console.error("Get course enrollment error:", error);
+
+        return res.status(500).json({
+            success: false,
+            message: "Unable to check course enrollment.",
+        });
+    }
+};
 // ==========================================
 // AI ASSESSMENT
 // ==========================================

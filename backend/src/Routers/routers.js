@@ -21,6 +21,7 @@ import {
     uploadProfileImage,
     updateProfile,
     enrollInCourse,
+    getCourseEnrollment,
 } from "../Controller/controller.js";
 import db from "../DB/db.js";
 import {
@@ -46,7 +47,11 @@ router.post(
     requireAuth,
     enrollInCourse
 );
-
+router.get(
+    "/courses/:slug/enrollment",
+    requireAuth,
+    getCourseEnrollment
+);
 router.get("/courses", getCourses);
 router.get("/blogs", getBlogs);
 
