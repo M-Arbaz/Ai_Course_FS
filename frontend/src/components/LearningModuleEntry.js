@@ -172,4 +172,4 @@ export default function LearningModuleEntry({
             </div>
         </main>
     );
-}
+} 
