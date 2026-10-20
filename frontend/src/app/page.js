@@ -123,7 +123,80 @@ const featuredCourses = [
         href: "/courses/business-ai",
     },
 ];
-
+const aiMarqueeLogos = [
+    {
+        name: "ChatGPT",
+        logo: "https://unpkg.com/@lobehub/icons-static-svg@1.95.1/icons/openai.svg",
+    },
+    {
+        name: "Claude",
+        logo: "https://cdn.simpleicons.org/claude",
+    },
+    {
+        name: "Gemini",
+        logo: "https://cdn.simpleicons.org/googlegemini",
+    },
+    {
+        name: "DeepSeek",
+        logo: "https://cdn.simpleicons.org/deepseek",
+    },
+    {
+        name: "Perplexity",
+        logo: "https://cdn.simpleicons.org/perplexity",
+    },
+    {
+        name: "Mistral AI",
+        logo: "https://cdn.simpleicons.org/mistralai",
+    },
+    {
+        name: "Qwen",
+        logo: "https://cdn.simpleicons.org/qwen",
+    },
+    {
+        name: "GitHub Copilot",
+        logo: "https://cdn.simpleicons.org/githubcopilot",
+    },
+    {
+        name: "Cursor",
+        logo: "https://cdn.simpleicons.org/cursor",
+    },
+    {
+        name: "Hugging Face",
+        logo: "https://cdn.simpleicons.org/huggingface",
+    },
+    {
+        name: "Ollama",
+        logo: "https://cdn.simpleicons.org/ollama",
+    },
+    {
+        name: "NotebookLM",
+        logo: "https://cdn.simpleicons.org/notebooklm",
+    },
+    {
+        name: "Replit",
+        logo: "https://cdn.simpleicons.org/replit",
+    },
+    {
+        name: "Replicate",
+        logo: "https://cdn.simpleicons.org/replicate",
+    },
+    {
+        name: "Notion",
+        logo: "https://cdn.simpleicons.org/notion",
+    },
+    {
+        name: "Grammarly",
+        logo: "https://cdn.simpleicons.org/grammarly",
+    },
+    {
+        name: "Zapier",
+        logo: "https://cdn.simpleicons.org/zapier",
+    },
+    {
+        name: "Claude Code",
+        logo: "https://cdn.simpleicons.org/claudecode",
+    },
+];
 export default function Home() {
     return (
         <>
@@ -266,102 +339,115 @@ export default function Home() {
                     </div>
                 </section>
 
-                {/* LEARNING PATHS */}
-                <section className="py-24">
-                    <div className="mx-auto max-w-7xl px-6 lg:px-8">
-                        <div className="mx-auto max-w-2xl text-center">
-                            <span className="text-sm font-black uppercase tracking-[0.2em] text-purple-500">
-                                Choose Your Path
-                            </span>
+                {/* AI LOGOS MARQUEE */}
+                <section className="ai-logo-section relative overflow-hidden border-y border-purple-100 bg-white py-14 dark:border-white/10 dark:bg-[#120d19]">
 
-                            <h2 className="mt-4 text-4xl font-black tracking-tight text-[#21172f] md:text-5xl">
-                                Learn AI your way.
-                            </h2>
+                    {/* SECTION HEADING */}
+                    <div className="mx-auto max-w-7xl px-6 text-center">
 
-                            <p className="mt-5 text-slate-500">
-                                Choose a complete journey, a fast-track program or focus on one
-                                specific AI skill.
-                            </p>
-                        </div>
+                        <p className="text-xs font-black uppercase tracking-[0.25em] text-purple-500">
+                            EXPLORE THE AI UNIVERSE
+                        </p>
 
-                        <div className="mt-14 grid gap-6 lg:grid-cols-3">
-                            <div className="group rounded-[30px] bg-[#eee5ff] p-8 transition hover:-translate-y-2">
-                                <span className="rounded-full bg-purple-600 px-4 py-2 text-xs font-bold text-white">
-                                    COMPLETE JOURNEY
-                                </span>
+                        <h2 className="mt-3 text-2xl font-black tracking-tight text-[#21172f] dark:text-white sm:text-3xl">
+                            Learn the tools shaping tomorrow.
+                        </h2>
 
-                                <div className="mt-12 text-6xl font-black text-purple-600">
-                                    28
-                                </div>
+                        <p className="mx-auto mt-3 max-w-xl text-sm text-slate-500 dark:text-slate-400">
+                            Discover powerful AI tools and build skills for the future.
+                        </p>
 
-                                <h3 className="mt-2 text-2xl font-black text-[#332146]">
-                                    Days AI Challenge
-                                </h3>
-
-                                <p className="mt-4 leading-7 text-[#756384]">
-                                    Explore 28 different AI tools across the most useful
-                                    categories.
-                                </p>
-
-                                <Link
-                                    href="/courses"
-                                    className="mt-8 inline-flex font-bold text-purple-700"
-                                >
-                                    Explore program →
-                                </Link>
-                            </div>
-
-                            <div className="group rounded-[30px] bg-[#edffc9] p-8 transition hover:-translate-y-2">
-                                <span className="rounded-full bg-[#a3e635] px-4 py-2 text-xs font-bold text-[#314300]">
-                                    FAST TRACK
-                                </span>
-
-                                <div className="mt-12 text-6xl font-black text-[#82b11a]">
-                                    15
-                                </div>
-
-                                <h3 className="mt-2 text-2xl font-black text-[#293714]">
-                                    Essential AI Tools
-                                </h3>
-
-                                <p className="mt-4 leading-7 text-[#69764e]">
-                                    Learn the core AI platforms that matter most for modern work.
-                                </p>
-
-                                <Link
-                                    href="/courses"
-                                    className="mt-8 inline-flex font-bold text-[#557b00]"
-                                >
-                                    Explore program →
-                                </Link>
-                            </div>
-
-                            <div className="group rounded-[30px] bg-[#ffe7f0] p-8 transition hover:-translate-y-2">
-                                <span className="rounded-full bg-pink-500 px-4 py-2 text-xs font-bold text-white">
-                                    SKILL BASED
-                                </span>
-
-                                <div className="mt-12 text-6xl font-black text-pink-500">13+</div>
-
-                                <h3 className="mt-2 text-2xl font-black text-[#4c2634]">
-                                    Single Courses
-                                </h3>
-
-                                <p className="mt-4 leading-7 text-[#84646f]">
-                                    Focus on video, design, coding, sales, marketing, data and
-                                    more.
-                                </p>
-
-                                <Link
-                                    href="/courses"
-                                    className="mt-8 inline-flex font-bold text-pink-600"
-                                >
-                                    View all courses →
-                                </Link>
-                            </div>
-                        </div>
                     </div>
+
+                    {/* MARQUEE */}
+                    <div className="ai-logo-window relative mt-10 overflow-hidden">
+
+                        {/* LEFT FADE */}
+                        <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-16 bg-gradient-to-r from-white to-transparent dark:from-[#120d19] sm:w-32" />
+
+                        {/* RIGHT FADE */}
+                        <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-16 bg-gradient-to-l from-white to-transparent dark:from-[#120d19] sm:w-32" />
+
+                        {/* MOVING TRACK */}
+                        <div className="ai-logo-track flex w-max items-center">
+
+                            {[0, 1].map((copy) => (
+
+                                <div
+                                    key={copy}
+                                    aria-hidden={copy === 1}
+                                    className="flex shrink-0 items-center gap-5 pr-5"
+                                >
+
+                                    {aiMarqueeLogos.map((tool) => (
+
+                                        <div
+                                            key={tool.name}
+                                            className="flex shrink-0 items-center gap-3 rounded-2xl border border-slate-100 bg-white px-6 py-4 shadow-sm transition duration-300 hover:border-purple-200 hover:shadow-md"
+                                        >
+
+                                            <img
+                                                src={tool.logo}
+                                                alt=""
+                                                width={34}
+                                                height={34}
+                                                loading="lazy"
+                                                decoding="async"
+                                                className="h-8 w-8 shrink-0 object-contain"
+                                            />
+
+                                            <span className="whitespace-nowrap text-sm font-bold text-[#30243e]">
+                                                {tool.name}
+                                            </span>
+
+                                        </div>
+
+                                    ))}
+
+                                </div>
+
+                            ))}
+
+                        </div>
+
+                    </div>
+
+                    {/* MARQUEE ANIMATION */}
+                    <style>{`
+                        @keyframes aiLogoMarquee {
+                            from {
+                                transform: translateX(0);
+                            }
+
+                            to {
+                                transform: translateX(-50%);
+                            }
+                        }
+
+                        .ai-logo-track {
+                            animation: aiLogoMarquee 50s linear infinite;
+                            will-change: transform;
+                        }
+
+                        .ai-logo-section:hover .ai-logo-track {
+                            animation-play-state: paused;
+                        }
+
+                        @media (prefers-reduced-motion: reduce) {
+                            .ai-logo-track {
+                                animation: none;
+                                will-change: auto;
+                            }
+
+                            .ai-logo-window {
+                                overflow-x: auto;
+                            }
+                        }
+                    `}</style>
+
                 </section>
+
+                {/* LEARNING PATHS */}
 
                 {/* CATEGORIES */}
                 <section id="categories" className="bg-[#fbfaff] py-24">
