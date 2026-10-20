@@ -270,7 +270,21 @@ export default function Home() {
                 <section className="ai-logo-section relative overflow-hidden border-y border-purple-100 bg-white py-14 dark:border-white/10 dark:bg-[#120d19]">
 
                     {/* SECTION HEADING */}
-                    {/* Aapka existing heading code same rahega */}
+                    <div className="mx-auto max-w-7xl px-6 text-center">
+
+                        <p className="text-xs font-black uppercase tracking-[0.25em] text-purple-500">
+                            EXPLORE THE AI UNIVERSE
+                        </p>
+
+                        <h2 className="mt-3 text-2xl font-black tracking-tight text-[#21172f] dark:text-white sm:text-3xl">
+                            Learn the tools shaping tomorrow.
+                        </h2>
+
+                        <p className="mx-auto mt-3 max-w-xl text-sm text-slate-500 dark:text-slate-400">
+                            Discover powerful AI tools and build skills for the future.
+                        </p>
+
+                    </div>
 
                     {/* INTERACTIVE AI LOGOS MARQUEE */}
                     <DraggableAiMarquee />
