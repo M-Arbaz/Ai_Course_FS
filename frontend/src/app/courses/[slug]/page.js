@@ -121,17 +121,18 @@ export default async function CourseDetailPage({ params }) {
             <main className="min-h-screen bg-white text-[#21172f]">
 
                 {/* HERO */}
-                <section className="px-4 pt-8 sm:px-6 lg:px-8">
+                <section className="px-4 pt-8 dark:text-white sm:px-6 lg:px-8">
                     <div
-                        className={`mx-auto max-w-7xl overflow-hidden rounded-[32px] bg-gradient-to-br ${theme.gradient}`}
+                        className={`relative mx-auto max-w-7xl overflow-hidden rounded-[32px] bg-gradient-to-br ${theme.gradient}`}
                     >
-                        <div className="grid gap-10 px-6 py-12 md:px-12 md:py-16 lg:grid-cols-[1.35fr_.65fr] lg:items-center">
+                        {/* UNIVERSAL DARK MODE GRADIENT */}
+                        <div className="pointer-events-none absolute inset-0 hidden bg-gradient-to-br from-[#2d1e42] via-[#241a35] to-[#182b3e] dark:block" />
 
+                        <div className="relative z-10 grid gap-10 px-6 py-12 md:px-12 md:py-16 lg:grid-cols-[1.35fr_.65fr] lg:items-center">
                             <div>
                                 <Link
                                     href="/courses"
-                                    className="mb-8 inline-flex items-center gap-2 text-sm font-bold text-purple-700 transition hover:gap-3"
-                                >
+                                    className="mb-8 inline-flex items-center gap-2 text-sm font-bold text-purple-700 transition hover:gap-3 dark:text-purple-300"                                >
                                     ← Back to Courses
                                 </Link>
 
@@ -147,27 +148,27 @@ export default async function CourseDetailPage({ params }) {
                                     {course.title}
                                 </h1>
 
-                                <p className="mt-6 max-w-3xl text-base leading-8 text-slate-700 sm:text-lg">
+                                <p className="mt-6 max-w-3xl text-base leading-8 text-slate-700 dark:text-slate-300 sm:text-lg">
                                     {course.description}
                                 </p>
 
                                 <div className="mt-8 flex flex-wrap gap-3">
-                                    <div className="rounded-2xl bg-white/80 px-5 py-3 shadow-sm backdrop-blur">
-                                        <p className="text-xs font-semibold uppercase text-slate-500">
+                                    <div className="rounded-2xl bg-white/80 px-5 py-3 shadow-sm backdrop-blur dark:border dark:border-white/10 dark:bg-[#352b47]/90 dark:text-white">
+                                        <p className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">
                                             Duration
                                         </p>
                                         <p className="mt-1 font-bold">{course.duration}</p>
                                     </div>
 
-                                    <div className="rounded-2xl bg-white/80 px-5 py-3 shadow-sm backdrop-blur">
-                                        <p className="text-xs font-semibold uppercase text-slate-500">
+                                    <div className="rounded-2xl bg-white/80 px-5 py-3 shadow-sm backdrop-blur dark:border dark:border-white/10 dark:bg-[#352b47]/90 dark:text-white">
+                                        <p className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">
                                             Level
                                         </p>
                                         <p className="mt-1 font-bold">{course.level}</p>
                                     </div>
 
-                                    <div className="rounded-2xl bg-white/80 px-5 py-3 shadow-sm backdrop-blur">
-                                        <p className="text-xs font-semibold uppercase text-slate-500">
+                                    <div className="rounded-2xl bg-white/80 px-5 py-3 shadow-sm backdrop-blur dark:border dark:border-white/10 dark:bg-[#352b47]/90 dark:text-white">
+                                        <p className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">
                                             Includes
                                         </p>
                                         <p className="mt-1 font-bold">
@@ -179,15 +180,13 @@ export default async function CourseDetailPage({ params }) {
                                 <div className="mt-9 flex flex-wrap gap-4">
                                     <Link
                                         href={`/courses/${course.slug}/enroll`}
-                                        className="rounded-full bg-[#21172f] px-7 py-4 text-sm font-bold text-white transition hover:-translate-y-0.5 hover:shadow-xl"
-                                    >
+                                        className="rounded-full bg-[#21172f] px-7 py-4 text-sm font-bold text-white transition hover:-translate-y-0.5 hover:shadow-xl dark:bg-purple-600 dark:hover:bg-purple-500"                                    >
                                         Enroll Now
                                     </Link>
 
                                     <a
                                         href="#curriculum"
-                                        className="rounded-full border border-purple-200 bg-white px-7 py-4 text-sm font-bold text-purple-700 transition hover:bg-purple-50"
-                                    >
+                                        className="rounded-full border border-purple-200 bg-white px-7 py-4 text-sm font-bold text-purple-700 transition hover:bg-purple-50 dark:border-white/20 dark:bg-white/10 dark:text-white dark:hover:bg-white/20"                                    >
                                         View Curriculum
                                     </a>
 
@@ -202,12 +201,12 @@ export default async function CourseDetailPage({ params }) {
                                 <div className="absolute -left-6 -top-6 h-24 w-24 rounded-full bg-[#A3E635]/70 blur-2xl" />
                                 <div className="absolute -bottom-6 -right-6 h-28 w-28 rounded-full bg-pink-300/70 blur-2xl" />
 
-                                <div className="relative rounded-[30px] border border-white/70 bg-white/80 p-7 shadow-xl backdrop-blur-xl">
+                                <div className="relative rounded-[30px] border border-white/70 bg-white/80 p-7 shadow-xl backdrop-blur-xl dark:border-white/10 dark:bg-[#33283f]/95 dark:text-white">
                                     <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-purple-600 text-2xl text-white">
                                         ✦
                                     </div>
 
-                                    <p className="text-sm font-bold uppercase tracking-widest text-purple-600">
+                                    <p className="text-sm font-bold uppercase tracking-widest text-purple-600 dark:text-purple-300">
                                         Course Experience
                                     </p>
 
