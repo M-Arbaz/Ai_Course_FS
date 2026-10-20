@@ -6,7 +6,7 @@ import DraggableAiMarquee from "@/components/DraggableAiMarquee";
 const categories = [
     {
         icon: "✦",
-        title: "AI Assistants",
+        title: "AI Chatbot",
         text: "ChatGPT, Claude, Gemini, Perplexity and more.",
         bg: "bg-[#f1e9ff] dark:bg-[#281c36]",
         iconBg: "bg-purple-600",
@@ -195,7 +195,7 @@ export default function Home() {
                                 <div className="col-span-2 rounded-[32px] bg-[#eee5ff] p-7 shadow-xl shadow-purple-100">
                                     <div className="flex items-center justify-between">
                                         <span className="rounded-full bg-white/80 px-4 py-2 text-xs font-bold text-purple-600">
-                                            AI CHATBOTS
+                                            AI ASSISTANTS
                                         </span>
 
                                         <div className="flex -space-x-2">
