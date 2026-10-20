@@ -195,7 +195,7 @@ export default function Home() {
                                 <div className="col-span-2 rounded-[32px] bg-[#eee5ff] p-7 shadow-xl shadow-purple-100">
                                     <div className="flex items-center justify-between">
                                         <span className="rounded-full bg-white/80 px-4 py-2 text-xs font-bold text-purple-600">
-                                            AI ASSISTANTS
+                                            AI CHATBOTS
                                         </span>
 
                                         <div className="flex -space-x-2">
