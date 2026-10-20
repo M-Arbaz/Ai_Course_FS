@@ -245,6 +245,7 @@ export const compressProfileImage =
                         profile_image = ?,
                         updated_at =
                             CURRENT_TIMESTAMP
+                            
                     WHERE
                         profile_image = ?
                     `,
