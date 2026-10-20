@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import backendApi from "@/lib/api";
@@ -181,6 +181,41 @@ const filterMap = {
 export default function CoursesPage() {
     const [activeFilter, setActiveFilter] = useState("All Courses");
 
+    // Sync selected filter with URL
+    useEffect(() => {
+        const syncFilterFromUrl = () => {
+            const category = new URLSearchParams(
+                window.location.search
+            ).get("category")?.toLowerCase();
+
+            const matchedFilter = filters.find(
+                (filter) => filter.toLowerCase() === category
+            );
+
+            setActiveFilter(matchedFilter || "All Courses");
+        };
+
+        syncFilterFromUrl();
+
+        window.addEventListener("popstate", syncFilterFromUrl);
+
+        return () => {
+            window.removeEventListener("popstate", syncFilterFromUrl);
+        };
+    }, []);
+
+    // Update filter and URL together
+    const changeFilter = (filter) => {
+        setActiveFilter(filter);
+
+        const url =
+            filter === "All Courses"
+                ? "/courses"
+                : `/courses?category=${filter.toLowerCase()}`;
+
+        window.history.pushState(null, "", url);
+    };
+
     const filteredCourses =
         activeFilter === "All Courses"
             ? courses
@@ -217,7 +252,7 @@ export default function CoursesPage() {
                                 <button
                                     key={item}
                                     type="button"
-                                    onClick={() => setActiveFilter(item)}
+                                    onClick={() => changeFilter(item)}
                                     className={`rounded-full px-5 py-2.5 text-sm font-bold transition-all duration-300 ${activeFilter === item
                                         ? "bg-purple-600 text-white shadow-lg shadow-purple-200"
                                         : "border border-purple-100 bg-white text-slate-600 hover:-translate-y-0.5 hover:border-purple-300 hover:bg-purple-50 hover:text-purple-600"

@@ -7,6 +7,7 @@ const categories = [
     {
         icon: "✦",
         title: "AI Chatbot",
+        category: "chatbots",
         text: "ChatGPT, Claude, Gemini, Perplexity and more.",
         bg: "bg-[#f1e9ff] dark:bg-[#281c36]",
         iconBg: "bg-purple-600",
@@ -14,6 +15,7 @@ const categories = [
     {
         icon: "▶",
         title: "Video Generation",
+        category: "video",
         text: "Sora, Runway, Pika, Kling, Luma and more.",
         bg: "bg-[#ffe8f2] dark:bg-[#2d1b29]",
         iconBg: "bg-pink-500",
@@ -21,6 +23,7 @@ const categories = [
     {
         icon: "✺",
         title: "Graphic Designing",
+        category: "design",
         text: "Midjourney, Canva AI, Ideogram, Flux and more.",
         bg: "bg-[#e4f3ff] dark:bg-[#172033]",
         iconBg: "bg-sky-500",
@@ -28,6 +31,7 @@ const categories = [
     {
         icon: "</>",
         title: "AI Coding",
+        category: "coding",
         text: "Cursor, Copilot, Replit, Windsurf and more.",
         bg: "bg-[#efffd4] dark:bg-[#223018]",
         iconBg: "bg-lime-500",
@@ -35,6 +39,7 @@ const categories = [
     {
         icon: "↗",
         title: "SEO & Marketing",
+        category: "marketing",
         text: "Use AI for smarter content, SEO and campaigns.",
         bg: "bg-[#fff3d9] dark:bg-[#302817]",
         iconBg: "bg-orange-400",
@@ -42,6 +47,7 @@ const categories = [
     {
         icon: "▥",
         title: "Data & Analytics",
+        category: "data",
         text: "Analyze data and discover useful insights with AI.",
         bg: "bg-[#ebe8ff] dark:bg-[#281c36]",
         iconBg: "bg-indigo-500",
@@ -49,6 +55,7 @@ const categories = [
     {
         icon: "⚡",
         title: "Business AI",
+        category: "business",
         text: "Automate workflows and everyday business tasks.",
         bg: "bg-[#ddfaee] dark:bg-[#172a23]",
         iconBg: "bg-emerald-500",
@@ -56,6 +63,7 @@ const categories = [
     {
         icon: "◎",
         title: "Sales AI",
+        category: "sales",
         text: "Prospecting, lead generation and AI-powered sales.",
         bg: "bg-[#ffe5ec] dark:bg-[#2d1b29]",
         iconBg: "bg-rose-500",
@@ -414,7 +422,7 @@ export default function Home() {
                             {categories.map((item) => (
                                 <Link
                                     href="/courses"
-                                    key={item.title}
+                                    href={`/courses?category=${item.category}`}
                                     className={`${item.bg} group rounded-[26px] p-6 transition duration-300 hover:-translate-y-2 hover:shadow-xl`}
                                 >
                                     <div
