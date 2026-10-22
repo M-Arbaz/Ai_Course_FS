@@ -664,7 +664,25 @@ export const enrollInCourse = async (req, res) => {
                 enrollment: existingEnrollments[0],
             });
         }
+        // Require Stripe checkout for paid, mapped courses.
+        // Existing enrollments have already been checked.
+        const [paidPrices] = await db.execute(
+            `SELECT id
+             FROM course_stripe_prices
+             WHERE course_id = ?
+               AND stripe_mode = 'test'
+               AND is_active = 1
+             LIMIT 1`,
+            [course.id]
+        );
 
+        if (paidPrices.length > 0) {
+            return res.status(403).json({
+                success: false,
+                checkoutRequired: true,
+                message: "Please subscribe to access this course.",
+            });
+        }
         const [result] = await db.execute(
             `
             INSERT INTO course_enrollments

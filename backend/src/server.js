@@ -2,6 +2,9 @@ import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import router from "./Routers/routers.js";
+import {
+    stripeWebhookHandler,
+} from "./Controller/stripeWebhook.controller.js";
 import path from "path";
 import { fileURLToPath } from "url";
 import {
@@ -26,6 +29,12 @@ app.use(
 app.use(
     "/public_assets",
     express.static(path.join(__dirname, "../public_assets"))
+);
+// Stripe must receive the unmodified request body.
+app.post(
+    "/api/stripe/webhook",
+    express.raw({ type: "application/json" }),
+    stripeWebhookHandler
 );
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

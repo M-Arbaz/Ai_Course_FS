@@ -36,16 +36,8 @@ import {
     requireAuth,
     profileImageUpload,
 } from "../Middelware/middelware.js";
-import {
-    createCourseCheckout,
-} from "../Controller/billing.controller.js";
-const router = express.Router();
 
-router.post(
-    "/billing/courses/:slug/checkout",
-    requireAuth,
-    createCourseCheckout
-);
+const router = express.Router();
 
 router.post(
     "/billing/courses/:slug/checkout",
