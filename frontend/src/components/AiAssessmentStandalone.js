@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import api from "../lib/api";
 
@@ -433,6 +433,52 @@ export default function AiAssessmentStandalone() {
     const [error, setError] = useState("");
     const [result, setResult] = useState(null);
 
+    useEffect(() => {
+        if (screen !== "lead") return;
+
+        let active = true;
+
+        const fillLoggedInUser = async () => {
+            try {
+                const response = await fetch(
+                    `${api()}/api/auth/me`,
+                    {
+                        method: "GET",
+                        credentials: "include",
+                        cache: "no-store",
+                    }
+                );
+
+                if (!response.ok) return;
+
+                const data = await response.json();
+
+                if (!active || !data?.authenticated || !data?.user) {
+                    return;
+                }
+
+                const user = data.user;
+
+                const fullName = [
+                    user.firstName,
+                    user.lastName,
+                ].filter(Boolean).join(" ").trim();
+
+                if (fullName) setName(fullName);
+                if (user.email) setEmail(user.email);
+
+            } catch (error) {
+                // Guest users can enter details manually.
+            }
+        };
+
+        fillLoggedInUser();
+
+        return () => {
+            active = false;
+        };
+    }, [screen]);
+
     const currentQuestion = questions[questionIndex];
 
     const progress =
@@ -736,8 +782,8 @@ export default function AiAssessmentStandalone() {
                                                         )
                                                 }
                                                 className={`relative flex min-h-[96px] items-center gap-4 rounded-[20px] border-2 p-4 text-left transition ${selected
-                                                        ? "border-purple-500 bg-purple-50 shadow-sm"
-                                                        : "border-slate-100 bg-white hover:border-purple-200 hover:bg-purple-50/40"
+                                                    ? "border-purple-500 bg-purple-50 shadow-sm"
+                                                    : "border-slate-100 bg-white hover:border-purple-200 hover:bg-purple-50/40"
                                                     }`}
                                             >
 

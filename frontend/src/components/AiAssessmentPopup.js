@@ -441,6 +441,52 @@ export default function AiAssessmentPopup() {
     const [result, setResult] = useState(null);
 
     useEffect(() => {
+        if (screen !== "lead") return;
+
+        let active = true;
+
+        const fillLoggedInUser = async () => {
+            try {
+                const response = await fetch(
+                    `${api()}/api/auth/me`,
+                    {
+                        method: "GET",
+                        credentials: "include",
+                        cache: "no-store",
+                    }
+                );
+
+                if (!response.ok) return;
+
+                const data = await response.json();
+
+                if (!active || !data?.authenticated || !data?.user) {
+                    return;
+                }
+
+                const user = data.user;
+
+                const fullName = [
+                    user.firstName,
+                    user.lastName,
+                ].filter(Boolean).join(" ").trim();
+
+                if (fullName) setName(fullName);
+                if (user.email) setEmail(user.email);
+
+            } catch (error) {
+                // Guest users can enter details manually.
+            }
+        };
+
+        fillLoggedInUser();
+
+        return () => {
+            active = false;
+        };
+    }, [screen]);
+
+    useEffect(() => {
         const completed =
             localStorage.getItem(ASSESSMENT_COMPLETED_KEY) === "true";
 
