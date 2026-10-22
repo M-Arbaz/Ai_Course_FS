@@ -1,13 +1,39 @@
+# ==========================================
+# BACKEND API SECURITY
+# ==========================================
+
 <IfModule mod_rewrite.c>
     RewriteEngine On
-    RewriteRule ^ - [L]
 
+    # Block backend source folders
+    RewriteRule ^(src|node_modules|\.git|\.github|logs|tmp)(/|$) - [F,L,NC]
+
+    # Block backend configuration and entry files
+    RewriteRule ^(app\.js|server\.js|package\.json|package-lock\.json|\.env(\..*)?|\.htaccess|\.gitignore)$ - [F,L,NC]
+
+</IfModule>
+
+# Block direct access to sensitive files
+<FilesMatch "(?i)(^\.|\.(js|mjs|cjs|json|map|sql|log|bak|old|ya?ml|pem|key|db|sqlite)$)">
+    Require all denied
+</FilesMatch>
+
+# ==========================================
+# DISABLE CACHING
+# ==========================================
+
+<IfModule mod_headers.c>
     Header always unset Cache-Control
     Header always unset Expires
+
     Header always set Cache-Control "no-store, no-cache, must-revalidate, max-age=0"
     Header always set Pragma "no-cache"
     Header always set Expires "0"
 </IfModule>
+
+# ==========================================
+# DISABLE PAGESPEED
+# ==========================================
 
 <IfModule pagespeed_module>
     ModPagespeed Off
