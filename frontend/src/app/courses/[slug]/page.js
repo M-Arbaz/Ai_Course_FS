@@ -182,8 +182,7 @@ export default async function CourseDetailPage({ params }) {
                                     <Link
                                         href={`/courses/${course.slug}/enroll`}
                                         className="rounded-full bg-[#21172f] px-7 py-4 text-sm font-bold text-white transition hover:-translate-y-0.5 hover:shadow-xl dark:bg-purple-600 dark:hover:bg-purple-500"                                    >
-                                        Enroll Now
-                                    </Link>
+                                        Subscribe Now                                    </Link>
 
                                     <a
                                         href="#curriculum"
