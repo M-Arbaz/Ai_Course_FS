@@ -7,6 +7,24 @@ const LOBE =
     "https://unpkg.com/@lobehub/icons-static-svg@1.95.1/icons";
 
 const toolBrands = {
+
+    // Additional AI tools and name aliases
+    "perplexity ai": ["perplexity", "perplexity.ai"],
+    "lexica": [null, "lexica.art"],
+    "adcreative.ai": [null, "adcreative.ai"],
+    "ocoya": [null, "ocoya.com"],
+    "albert.ai": [null, "albert.ai"],
+    "scispace": [null, "scispace.com"],
+    "nanonets": [null, "nanonets.com"],
+    "elicit": [null, "elicit.com"],
+    "notion ai": ["notion", "notion.so"],
+    "fireflies ai": [null, "fireflies.ai"],
+    "crewai": [null, "crewai.com"],
+    "n8n": ["n8n", "n8n.io"],
+    "relume": [null, "relume.io"],
+    "speak": [null, "speak.com"],
+    "apollo ai": [null, "apollo.io"],
+
     // Video Generation
     "sora": ["sora", "openai.com"],
     "opus clip": [null, "opus.pro"],
@@ -97,8 +115,16 @@ export default function CourseToolLogo({ name }) {
             (brand[2] === "simple"
                 ? `https://cdn.simpleicons.org/${brand[0]}`
                 : `${LOBE}/${brand[0]}.svg`),
+
+            brand[1] &&
+            `https://${brand[1]}/favicon.ico`,
+
             brand[1] &&
             `https://www.google.com/s2/favicons?domain=${encodeURIComponent(brand[1])}&sz=128`,
+
+            brand[1] &&
+            `https://icons.duckduckgo.com/ip3/${brand[1]}.ico`,
+
         ].filter(Boolean)
         : [];
 
