@@ -5,6 +5,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import CourseProgressBall from "@/components/CourseProgressBall";
 import CourseContinueButton from "@/components/CourseContinueButton";
+import CourseToolLogo from "@/components/CourseToolLogo";
 const themeMap = {
     purple: {
         gradient: "from-purple-100 via-pink-50 to-blue-100",
@@ -335,19 +336,16 @@ export default async function CourseDetailPage({ params }) {
                         </div>
 
                         <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                            {tools.map((tool, index) => (
-                                <div
-                                    key={tool}
-                                    className="group rounded-[24px] border border-purple-100 bg-white p-5 shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-lg"
-                                >
-                                    <div className="flex items-center gap-4">
-                                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-purple-100 text-sm font-black text-purple-700">
-                                            {String(index + 1).padStart(2, "0")}
-                                        </div>
+                            {tools.map((tool) => (<div
+                                key={tool}
+                                className="group rounded-[24px] border border-purple-100 bg-white p-5 shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-lg"
+                            >
+                                <div className="flex items-center gap-4">
+                                    <CourseToolLogo name={tool} />
 
-                                        <h3 className="font-bold">{tool}</h3>
-                                    </div>
+                                    <h3 className="font-bold">{tool}</h3>
                                 </div>
+                            </div>
                             ))}
                         </div>
                     </div>
