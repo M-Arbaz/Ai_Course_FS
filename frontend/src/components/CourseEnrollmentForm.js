@@ -21,7 +21,17 @@ export default function CourseEnrollmentForm({
 
     const [error, setError] = useState("");
     const [message, setMessage] = useState("");
+    const [checkoutReturn, setCheckoutReturn] = useState(null);
 
+    useEffect(() => {
+        const status = new URLSearchParams(
+            window.location.search
+        ).get("checkout");
+
+        if (status === "success" || status === "cancelled") {
+            setCheckoutReturn(status);
+        }
+    }, []);
     useEffect(() => {
         let active = true;
 
@@ -130,12 +140,11 @@ export default function CourseEnrollmentForm({
         };
     }, [router, slug]);
 
-    const handleEnroll = async (event) => {
+
+    const handleSubscribe = async (event) => {
         event.preventDefault();
 
-        if (submitting || enrollment) {
-            return;
-        }
+        if (submitting || enrollment) return;
 
         try {
             setSubmitting(true);
@@ -143,22 +152,17 @@ export default function CourseEnrollmentForm({
             setMessage("");
 
             const response = await fetch(
-                `${api()}/api/courses/${encodeURIComponent(
-                    slug
-                )}/enroll`,
+                `${api()}/api/billing/courses/${encodeURIComponent(slug)}/checkout`,
                 {
                     method: "POST",
                     credentials: "include",
                     headers: {
-                        "Content-Type":
-                            "application/json",
+                        "Accept": "application/json",
                     },
                 }
             );
 
-            const data = await response
-                .json()
-                .catch(() => ({}));
+            const data = await response.json().catch(() => ({}));
 
             if (response.status === 401) {
                 router.replace(
@@ -169,39 +173,27 @@ export default function CourseEnrollmentForm({
                 return;
             }
 
-            if (!response.ok) {
-                setError(
-                    data?.message ||
-                    "Unable to complete enrollment."
+            if (!response.ok || !data.success) {
+                throw new Error(
+                    data.message || "Unable to start subscription."
                 );
-                return;
             }
 
-            setCourse(
-                data?.course || course
-            );
+            const checkoutUrl = new URL(data.checkoutUrl);
 
-            setEnrollment(
-                data?.enrollment || {
-                    status: "active",
-                }
-            );
+            if (
+                checkoutUrl.protocol !== "https:" ||
+                checkoutUrl.hostname !== "checkout.stripe.com"
+            ) {
+                throw new Error("Invalid Stripe Checkout URL.");
+            }
 
-            setMessage(
-                data?.alreadyEnrolled
-                    ? "You are already enrolled in this course."
-                    : "Enrollment completed successfully."
-            );
+            window.location.assign(checkoutUrl.href);
+
         } catch (error) {
-            console.error(
-                "Course enrollment error:",
-                error
-            );
-
             setError(
-                "Unable to complete enrollment. Please try again."
+                error.message || "Unable to start subscription."
             );
-        } finally {
             setSubmitting(false);
         }
     };
@@ -247,8 +239,8 @@ export default function CourseEnrollmentForm({
                     </h1>
 
                     <p className="mt-3 text-sm leading-6 text-purple-100">
-                        Confirm your details to start
-                        learning.
+                        Confirm your account details before continuing
+                        to secure Stripe Checkout.
                     </p>
                 </div>
 
@@ -290,9 +282,32 @@ export default function CourseEnrollmentForm({
                                 />
                             </div>
                         </div>
+
+                    ) : checkoutReturn === "success" ? (
+                        <div className="rounded-2xl bg-purple-50 p-6 text-center dark:bg-[#2b2038]">
+                            <h2 className="text-xl font-black">
+                                Payment Verification
+                            </h2>
+
+                            <p className="mt-3 text-sm text-slate-600 dark:text-slate-300">
+                                Your checkout has returned successfully.
+                                We are waiting for Stripe to confirm
+                                your subscription before unlocking
+                                this course.
+                            </p>
+
+                            <button
+                                type="button"
+                                onClick={() => window.location.reload()}
+                                className="mt-5 rounded-xl bg-purple-600 px-6 py-3 font-bold text-white"
+                            >
+                                Check Subscription Status
+                            </button>
+                        </div>
                     ) : (
                         <form
-                            onSubmit={handleEnroll}
+                            onSubmit={handleSubscribe}
+
                         >
                             <div className="grid gap-5">
                                 <div>
@@ -346,15 +361,21 @@ export default function CourseEnrollmentForm({
                                 securely to your signed-in
                                 account.
                             </p>
-
+                            <p className="mt-5 text-sm leading-6 text-slate-600 dark:text-slate-300">
+                                Get 50% off your first billing period.
+                                Your subscription renews monthly at the
+                                regular course price until cancelled.
+                                The exact amounts and billing details
+                                will be shown before payment.
+                            </p>
                             <button
                                 type="submit"
                                 disabled={submitting}
                                 className="mt-7 w-full rounded-2xl bg-purple-600 px-6 py-4 font-black text-white transition hover:bg-purple-700 disabled:cursor-not-allowed disabled:opacity-60"
                             >
                                 {submitting
-                                    ? "Enrolling..."
-                                    : "Confirm Enrollment"}
+                                    ? "Redirecting to Stripe..."
+                                    : "Continue to Secure Checkout"}
                             </button>
                         </form>
                     )}
