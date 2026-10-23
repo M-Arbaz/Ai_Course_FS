@@ -131,8 +131,12 @@ export const createCourseCheckout = async (req, res) => {
                       AND cs.course_id = ce.course_id
                       AND cs.status = 'active'
                       AND cs.ended_at IS NULL
-                      AND cs.current_period_end >
-                          UTC_TIMESTAMP()
+                  
+                       AND cs.current_period_end >
+                           UTC_TIMESTAMP()
+                       AND cs.paid_through >
+                           UTC_TIMESTAMP()
+
                 ) AS has_paid_access
              FROM course_enrollments ce
              WHERE ce.user_id = ?

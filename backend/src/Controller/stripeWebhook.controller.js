@@ -94,12 +94,10 @@ export const stripeWebhookHandler = async (req, res) => {
         // Fetch current subscription to reduce
         // problems caused by out-of-order events.
 
+
         const subscription =
             await stripe.subscriptions.retrieve(
-                subscriptionId,
-                {
-                    expand: ["latest_invoice"],
-                }
+                subscriptionId
             );
 
 
@@ -146,11 +144,94 @@ export const stripeWebhookHandler = async (req, res) => {
             );
         }
 
+
         const periodEnd =
             subscription.items?.data?.[0]?.current_period_end ??
             subscription.current_period_end;
 
+        let verifiedPaidThrough = null;
+
+        // Only a genuine invoice.paid event can
+        // extend the verified paid entitlement.
+        if (event.type === "invoice.paid") {
+            const invoice =
+                await stripe.invoices.retrieve(object.id);
+
+            const item =
+                subscription.items?.data?.[0];
+
+            const invoiceSubscriptionId = getId(
+                invoice.subscription ||
+                invoice.parent?.subscription_details?.subscription
+            );
+
+            const validPaidInvoice =
+                invoice.livemode === false &&
+                invoice.status === "paid" &&
+                invoice.paid === true &&
+                invoice.paid_out_of_band !== true &&
+                invoice.collection_method ===
+                "charge_automatically" &&
+                invoice.currency === "usd" &&
+                Number.isInteger(invoice.amount_paid) &&
+                invoice.amount_paid > 0 &&
+                ["subscription_create", "subscription_cycle"]
+                    .includes(invoice.billing_reason) &&
+                getId(invoice.customer) === customerId &&
+                invoiceSubscriptionId === subscription.id &&
+                subscription.status === "active" &&
+                subscription.items?.data?.length === 1 &&
+                getId(item?.price) === priceId &&
+                item?.price?.currency === "usd" &&
+                item?.price?.recurring?.interval === "month" &&
+                item?.price?.recurring?.interval_count === 1 &&
+                Number.isFinite(periodEnd);
+
+            if (validPaidInvoice) {
+                // Invoice general period_end is not
+                // necessarily the subscribed service period.
+                for await (
+                    const line of stripe.invoices.listLineItems(
+                        invoice.id,
+                        { limit: 100 }
+                    )
+                ) {
+                    const linePriceId =
+                        line.pricing?.price_details?.price ||
+                        getId(line.price);
+
+                    const lineSubscriptionItemId =
+                        line.parent
+                            ?.subscription_item_details
+                            ?.subscription_item ||
+                        getId(line.subscription_item);
+
+                    const matchingLine =
+                        linePriceId === priceId &&
+                        lineSubscriptionItemId === item.id &&
+                        line.parent
+                            ?.subscription_item_details
+                            ?.proration !== true &&
+                        line.currency === "usd" &&
+                        Number(line.amount) > 0 &&
+                        Number.isInteger(line.period?.start) &&
+                        Number.isInteger(line.period?.end) &&
+                        line.period.end >
+                        Math.floor(Date.now() / 1000) &&
+                        line.period.end > line.period.start &&
+                        line.period.end <= periodEnd;
+
+                    if (matchingLine) {
+                        verifiedPaidThrough =
+                            toMysqlDate(line.period.end);
+                        break;
+                    }
+                }
+            }
+        }
+
         connection = await db.getConnection();
+
         await connection.beginTransaction();
 
         // Event ID is unique. The transaction prevents
@@ -295,6 +376,79 @@ export const stripeWebhookHandler = async (req, res) => {
                     END`,
                 [userId, courseId]
 
+            );
+        }
+
+        // Verified payment entitlement and LMS enrollment
+        // must be updated in the same database transaction.
+        if (verifiedPaidThrough) {
+            const [matchedSubscriptions] =
+                await connection.execute(
+                    `SELECT id
+                     FROM course_subscriptions
+                     WHERE stripe_subscription_id = ?
+                       AND stripe_customer_id = ?
+                       AND stripe_price_id = ?
+                       AND user_id = ?
+                       AND course_id = ?
+                     LIMIT 1 FOR UPDATE`,
+                    [
+                        subscription.id,
+                        customerId,
+                        priceId,
+                        userId,
+                        courseId,
+                    ]
+                );
+
+            if (!matchedSubscriptions.length) {
+                throw new Error(
+                    "Verified subscription mapping was not found."
+                );
+            }
+
+            // Never move the paid-through date backwards.
+            await connection.execute(
+                `UPDATE course_subscriptions
+                 SET paid_through = CASE
+                     WHEN paid_through IS NULL
+                          OR paid_through < ?
+                     THEN ?
+                     ELSE paid_through
+                 END
+                 WHERE id = ?`,
+                [
+                    verifiedPaidThrough,
+                    verifiedPaidThrough,
+                    matchedSubscriptions[0].id,
+                ]
+            );
+
+            // Preserve legacy and completed enrollments.
+            // Restore inactive Stripe enrollments only
+            // after the verified payment.
+            await connection.execute(
+                `INSERT INTO course_enrollments (
+                    user_id,
+                    course_id,
+                    status,
+                    access_source,
+                    enrolled_at
+                )
+                VALUES (
+                    ?, ?,
+                    'active',
+                    'stripe',
+                    UTC_TIMESTAMP()
+                )
+                ON DUPLICATE KEY UPDATE
+                    status = CASE
+                        WHEN access_source = 'stripe'
+                             AND status <> 'completed'
+                        THEN 'active'
+                        ELSE status
+                    END`,
+                [userId, courseId]
             );
         }
 

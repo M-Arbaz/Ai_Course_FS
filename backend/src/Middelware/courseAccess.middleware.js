@@ -40,8 +40,12 @@ export const requireActiveCourseAccess = async (
                                     AND cs.course_id = ce.course_id
                                     AND cs.status = 'active'
                                     AND cs.ended_at IS NULL
+                                 
                                     AND cs.current_period_end >
                                         UTC_TIMESTAMP()
+                                    AND cs.paid_through >
+                                        UTC_TIMESTAMP()
+
                               )
                           )
                       )
