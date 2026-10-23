@@ -141,6 +141,27 @@ export const createCourseCheckout = async (req, res) => {
             [userId, course.id]
         );
 
+
+        // Do not charge users when an inactive
+        // legacy enrollment requires reconciliation.
+        const hasInactiveLegacyEnrollment =
+            enrollments.some(
+                (enrollment) =>
+                    enrollment.access_source === "legacy" &&
+                    !["active", "completed"].includes(
+                        enrollment.status
+                    )
+            );
+
+        if (hasInactiveLegacyEnrollment) {
+            return res.status(409).json({
+                success: false,
+                code: "LEGACY_ENROLLMENT_REVIEW_REQUIRED",
+                message:
+                    "Your previous course enrollment needs review before subscribing. Please contact support.",
+            });
+        }
+
         const alreadyHasAccess = enrollments.some(
             (enrollment) =>
                 ["active", "completed"].includes(

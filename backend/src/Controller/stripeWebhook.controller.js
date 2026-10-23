@@ -285,9 +285,16 @@ export const stripeWebhookHandler = async (req, res) => {
                     'stripe',
                     UTC_TIMESTAMP()
                 )
+
                 ON DUPLICATE KEY UPDATE
-                    id = id`,
+                    status = CASE
+                        WHEN access_source = 'stripe'
+                             AND status <> 'completed'
+                        THEN 'active'
+                        ELSE status
+                    END`,
                 [userId, courseId]
+
             );
         }
 
