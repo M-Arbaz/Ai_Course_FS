@@ -32,10 +32,15 @@ import db from "../DB/db.js";
 import {
     createCourseCheckout,
 } from "../Controller/billing.controller.js";
+
 import {
     requireAuth,
     profileImageUpload,
 } from "../Middelware/middelware.js";
+
+import {
+    requireActiveCourseAccess,
+} from "../Middelware/courseAccess.middleware.js";
 
 const router = express.Router();
 
@@ -62,33 +67,42 @@ router.post(
     enrollInCourse
 );
 
+
 router.get(
     "/learning/courses/:courseSlug/tools/:toolSlug/lessons/:lessonSlug",
     requireAuth,
+    requireActiveCourseAccess,
     getLearningLesson
 );
 
 router.get(
     "/learning/courses/:courseSlug/tools/:toolSlug/lessons/:lessonSlug/quiz",
     requireAuth,
+    requireActiveCourseAccess,
     getLessonQuiz
 );
 
 router.post(
     "/learning/courses/:courseSlug/tools/:toolSlug/lessons/:lessonSlug/quiz/submit",
     requireAuth,
+    requireActiveCourseAccess,
     submitLessonQuiz
 );
+
 router.get(
     "/learning/courses/:courseSlug/tools/:toolSlug",
     requireAuth,
+    requireActiveCourseAccess,
     getLearningModule
 );
+
 router.get(
     "/learning/courses/:courseSlug/progress",
     requireAuth,
+    requireActiveCourseAccess,
     getCourseLearningProgress
 );
+
 router.get(
     "/courses/:slug/enrollment",
     requireAuth,
