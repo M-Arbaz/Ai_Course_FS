@@ -416,12 +416,12 @@ export const createCourseCheckout = async (req, res) => {
         const returnPath =
             `/courses/${encodeURIComponent(course.slug)}/enroll`;
 
+
         const session = await stripe.checkout.sessions.create({
             mode: "subscription",
-            payment_method_types: ["card"],
-
 
             customer: stripeCustomerId,
+
 
             client_reference_id: String(userId),
 
