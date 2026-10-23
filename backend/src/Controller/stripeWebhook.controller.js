@@ -221,14 +221,34 @@ export const stripeWebhookHandler = async (req, res) => {
                         line.period.end > line.period.start &&
                         line.period.end <= periodEnd;
 
+
                     if (matchingLine) {
                         verifiedPaidThrough =
                             toMysqlDate(line.period.end);
                         break;
                     }
                 }
+
+                // A paid subscription invoice was verified,
+                // but no eligible service-period line matched.
+                // Do not acknowledge this event as processed.
+                if (!verifiedPaidThrough) {
+                    console.error(
+                        "Stripe paid invoice period mismatch:",
+                        {
+                            eventId: event.id,
+                            invoiceId: invoice.id,
+                            subscriptionId: subscription.id,
+                        }
+                    );
+
+                    throw new Error(
+                        "Verified paid invoice has no matching subscription service period."
+                    );
+                }
             }
         }
+
 
         connection = await db.getConnection();
 
@@ -324,60 +344,6 @@ export const stripeWebhookHandler = async (req, res) => {
         );
 
 
-        // Activate LMS access only after verifying
-        // the latest paid Stripe subscription invoice.
-        const invoice = subscription.latest_invoice;
-
-        const invoiceSubscriptionId = getId(
-            invoice?.subscription ||
-            invoice?.parent?.subscription_details?.subscription
-        );
-
-        const hasVerifiedPaidAccess =
-            invoice &&
-            typeof invoice === "object" &&
-            invoice.status === "paid" &&
-            invoice.paid === true &&
-            invoice.paid_out_of_band !== true &&
-            invoice.collection_method ===
-            "charge_automatically" &&
-            invoice.currency === "usd" &&
-            Number.isInteger(invoice.amount_paid) &&
-            invoice.amount_paid > 0 &&
-            getId(invoice.customer) === customerId &&
-            invoiceSubscriptionId === subscription.id &&
-            subscription.status === "active" &&
-            subscription.items?.data?.length === 1 &&
-            Number.isFinite(periodEnd) &&
-            periodEnd > Math.floor(Date.now() / 1000);
-
-        if (hasVerifiedPaidAccess) {
-            await connection.execute(
-                `INSERT INTO course_enrollments (
-                    user_id,
-                    course_id,
-                    status,
-                    access_source,
-                    enrolled_at
-                )
-                VALUES (
-                    ?, ?,
-                    'active',
-                    'stripe',
-                    UTC_TIMESTAMP()
-                )
-
-                ON DUPLICATE KEY UPDATE
-                    status = CASE
-                        WHEN access_source = 'stripe'
-                             AND status <> 'completed'
-                        THEN 'active'
-                        ELSE status
-                    END`,
-                [userId, courseId]
-
-            );
-        }
 
         // Verified payment entitlement and LMS enrollment
         // must be updated in the same database transaction.
