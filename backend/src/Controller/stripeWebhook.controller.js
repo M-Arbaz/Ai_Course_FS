@@ -93,8 +93,15 @@ export const stripeWebhookHandler = async (req, res) => {
 
         // Fetch current subscription to reduce
         // problems caused by out-of-order events.
+
         const subscription =
-            await stripe.subscriptions.retrieve(subscriptionId);
+            await stripe.subscriptions.retrieve(
+                subscriptionId,
+                {
+                    expand: ["latest_invoice"],
+                }
+            );
+
 
         const userId = String(
             subscription.metadata?.user_id || ""
@@ -235,9 +242,59 @@ export const stripeWebhookHandler = async (req, res) => {
             ]
         );
 
+
+        // Activate LMS access only after verifying
+        // the latest paid Stripe subscription invoice.
+        const invoice = subscription.latest_invoice;
+
+        const invoiceSubscriptionId = getId(
+            invoice?.subscription ||
+            invoice?.parent?.subscription_details?.subscription
+        );
+
+        const hasVerifiedPaidAccess =
+            invoice &&
+            typeof invoice === "object" &&
+            invoice.status === "paid" &&
+            invoice.paid === true &&
+            invoice.paid_out_of_band !== true &&
+            invoice.collection_method ===
+            "charge_automatically" &&
+            invoice.currency === "usd" &&
+            Number.isInteger(invoice.amount_paid) &&
+            invoice.amount_paid > 0 &&
+            getId(invoice.customer) === customerId &&
+            invoiceSubscriptionId === subscription.id &&
+            subscription.status === "active" &&
+            subscription.items?.data?.length === 1 &&
+            Number.isFinite(periodEnd) &&
+            periodEnd > Math.floor(Date.now() / 1000);
+
+        if (hasVerifiedPaidAccess) {
+            await connection.execute(
+                `INSERT INTO course_enrollments (
+                    user_id,
+                    course_id,
+                    status,
+                    access_source,
+                    enrolled_at
+                )
+                VALUES (
+                    ?, ?,
+                    'active',
+                    'stripe',
+                    UTC_TIMESTAMP()
+                )
+                ON DUPLICATE KEY UPDATE
+                    id = id`,
+                [userId, courseId]
+            );
+        }
+
         await connection.commit();
 
         return res.json({ received: true });
+
     } catch (error) {
         if (connection) {
             await connection.rollback().catch(() => { });
