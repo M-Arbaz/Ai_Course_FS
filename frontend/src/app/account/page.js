@@ -59,6 +59,11 @@ export default function AccountPage() {
     const [error, setError] =
         useState("");
 
+    const [openingBillingPortal, setOpeningBillingPortal] =
+        useState(false);
+
+    const [billingError, setBillingError] =
+        useState("");
     useEffect(() => {
         let active = true;
 
@@ -439,6 +444,95 @@ export default function AccountPage() {
             );
         } finally {
             setLoggingOut(false);
+        }
+    };
+
+
+    const handleManageBilling = async () => {
+        if (openingBillingPortal) return;
+
+        setOpeningBillingPortal(true);
+        setBillingError("");
+
+        try {
+            const response = await fetch(
+                `${api()}/api/billing/portal`,
+                {
+                    method: "POST",
+                    credentials: "include",
+                    cache: "no-store",
+                    headers: {
+                        Accept: "application/json",
+                    },
+                }
+            );
+
+            const data = await response
+                .json()
+                .catch(() => ({}));
+
+            if (response.status === 401) {
+                router.replace("/login");
+                return;
+            }
+
+            if (response.status === 403) {
+                setBillingError(
+                    "Billing request was blocked. Refresh the page and try again."
+                );
+                return;
+            }
+
+            if (
+                response.status === 404 &&
+                data?.code === "NO_BILLING_CUSTOMER"
+            ) {
+                setBillingError(
+                    "You don't have a billing account yet. Subscribe to a course first."
+                );
+                return;
+            }
+
+            if (!response.ok) {
+                setBillingError(
+                    data?.message ||
+                    "Unable to open billing. Please try again."
+                );
+                return;
+            }
+
+            if (
+                !data?.success ||
+                typeof data?.portalUrl !== "string"
+            ) {
+                throw new Error(
+                    "Invalid billing portal response."
+                );
+            }
+
+            const portalUrl = new URL(data.portalUrl);
+
+            if (
+                portalUrl.protocol !== "https:" ||
+                portalUrl.hostname !== "billing.stripe.com"
+            ) {
+                throw new Error(
+                    "Invalid Stripe billing portal URL."
+                );
+            }
+
+            window.location.assign(portalUrl.href);
+        } catch (error) {
+            console.error(
+                "Billing portal error:",
+                error
+            );
+
+            setBillingError(
+                "Unable to connect to Stripe Billing. Please try again."
+            );
+        } finally {
+            setOpeningBillingPortal(false);
         }
     };
 
@@ -1015,12 +1109,69 @@ export default function AccountPage() {
                                 </div>
 
                             </div>
+
+                        )}
+
+                        {!loading && user && (
+                            <section
+                                aria-labelledby="billing-section-title"
+                                className="mt-8 rounded-[30px] border border-purple-100 bg-[#fbfaff] p-7 shadow-sm dark:border-purple-900/50 dark:bg-[#1d1528] md:p-9"
+                            >
+                                <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+                                    <div>
+                                        <p className="text-sm font-black uppercase tracking-[0.18em] text-purple-500">
+                                            Account Billing
+                                        </p>
+
+                                        <h2
+                                            id="billing-section-title"
+                                            className="mt-3 text-2xl font-black text-[#21172f] dark:text-white"
+                                        >
+                                            Billing & Subscriptions
+                                        </h2>
+
+                                        <p className="mt-3 max-w-xl text-sm leading-7 text-slate-600 dark:text-slate-300">
+                                            Manage your course subscriptions,
+                                            saved payment methods, invoices
+                                            and cancellation preferences
+                                            securely through Stripe.
+                                        </p>
+                                    </div>
+
+                                    <button
+                                        type="button"
+                                        onClick={handleManageBilling}
+                                        disabled={openingBillingPortal}
+                                        aria-busy={openingBillingPortal}
+                                        className="inline-flex shrink-0 items-center justify-center rounded-2xl bg-purple-600 px-6 py-3.5 text-sm font-black text-white transition hover:bg-purple-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-500 disabled:cursor-not-allowed disabled:opacity-60"
+                                    >
+                                        {openingBillingPortal
+                                            ? "Opening Stripe..."
+                                            : "Manage Billing →"}
+                                    </button>
+                                </div>
+
+                                {billingError && (
+                                    <div
+                                        role="alert"
+                                        className="mt-6 rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm font-semibold text-red-700"
+                                    >
+                                        {billingError}
+                                    </div>
+                                )}
+
+                                <p className="mt-6 text-xs font-medium text-slate-500 dark:text-slate-400">
+                                    Stripe Sandbox — test payments only.
+                                    Card details are managed securely by Stripe.
+                                </p>
+                            </section>
                         )}
                     </div>
                 </section>
             </main>
 
             <Footer />
+
         </>
     );
 }
