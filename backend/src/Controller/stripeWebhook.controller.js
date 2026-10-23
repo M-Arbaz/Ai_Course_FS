@@ -1,6 +1,9 @@
 
+
 import db from "../DB/db.js";
 import { getStripe } from "../Services/stripeClient.js";
+import { createHash } from "node:crypto";
+
 
 const EVENTS = new Set([
     "checkout.session.completed",
@@ -60,10 +63,14 @@ export const stripeWebhookHandler = async (req, res) => {
         return res.json({ received: true });
     }
 
+
     let connection;
+    let subscriptionLockName = null;
+    let subscriptionLockAcquired = false;
 
     try {
         const object = event.data.object;
+
         let subscriptionId = null;
 
         if (event.type === "checkout.session.completed") {
@@ -91,14 +98,38 @@ export const stripeWebhookHandler = async (req, res) => {
             return res.json({ received: true });
         }
 
-        // Fetch current subscription to reduce
-        // problems caused by out-of-order events.
 
+        // Serialize webhook processing per subscription.
+        // Acquire the lock BEFORE retrieving Stripe state.
+        connection = await db.getConnection();
 
+        const subscriptionLockHash = createHash("sha256")
+            .update(subscriptionId)
+            .digest("hex")
+            .slice(0, 48);
+
+        subscriptionLockName =
+            `stripe-wh-${subscriptionLockHash}`;
+
+        const [lockRows] = await connection.execute(
+            "SELECT GET_LOCK(?, 10) AS acquired",
+            [subscriptionLockName]
+        );
+
+        if (Number(lockRows[0]?.acquired) !== 1) {
+            throw new Error(
+                "Unable to acquire Stripe subscription processing lock."
+            );
+        }
+
+        subscriptionLockAcquired = true;
+
+        // Fetch the latest state after obtaining the lock.
         const subscription =
             await stripe.subscriptions.retrieve(
                 subscriptionId
             );
+
 
 
         const userId = String(
@@ -128,7 +159,8 @@ export const stripeWebhookHandler = async (req, res) => {
         }
 
         // Only accept prices mapped to this LMS course.
-        const [prices] = await db.execute(
+
+        const [prices] = await connection.execute(
             `SELECT id
              FROM course_stripe_prices
              WHERE course_id = ?
@@ -250,9 +282,9 @@ export const stripeWebhookHandler = async (req, res) => {
         }
 
 
-        connection = await db.getConnection();
 
         await connection.beginTransaction();
+
 
         // Event ID is unique. The transaction prevents
         // incomplete processing from being marked complete.
@@ -432,7 +464,39 @@ export const stripeWebhookHandler = async (req, res) => {
         return res.status(500).json({
             error: "Webhook processing failed",
         });
+
     } finally {
-        connection?.release();
+        if (connection) {
+            if (subscriptionLockAcquired) {
+                try {
+                    const [releasedRows] =
+                        await connection.execute(
+                            "SELECT RELEASE_LOCK(?) AS released",
+                            [subscriptionLockName]
+                        );
+
+                    if (
+                        Number(releasedRows[0]?.released) !== 1
+                    ) {
+                        throw new Error(
+                            "Stripe subscription lock release was not confirmed."
+                        );
+                    }
+                } catch (releaseError) {
+                    console.error(
+                        "Stripe subscription lock release error:",
+                        releaseError
+                    );
+
+                    // Never return a connection with an
+                    // uncertain lock state to the pool.
+                    connection.destroy();
+                    connection = null;
+                }
+            }
+
+            connection?.release();
+        }
     }
 };
+
