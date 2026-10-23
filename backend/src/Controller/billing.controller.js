@@ -464,14 +464,32 @@ export const createCourseCheckout = async (req, res) => {
         });
 
 
+
     } catch (error) {
         console.error("Stripe checkout error:", error);
+
+        const showDebug =
+            process.env.STRIPE_CHECKOUT_TEST_ENABLED === "true" &&
+            process.env.STRIPE_CHECKOUT_DEBUG === "true";
 
         return res.status(500).json({
             success: false,
             message: "Unable to create checkout session.",
+            ...(showDebug
+                ? {
+                    debug: {
+                        type: error?.type || error?.name || null,
+                        code: error?.code || null,
+                        param: error?.param || null,
+                        detail: String(
+                            error?.message || "Unknown error"
+                        ).slice(0, 300),
+                    },
+                }
+                : {}),
         });
     } finally {
+
         if (checkoutLockConnection) {
             if (checkoutLockAcquired) {
                 await checkoutLockConnection
