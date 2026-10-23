@@ -2201,22 +2201,52 @@ export const getCourseEnrollment = async (req, res) => {
 
         const course = courses[0];
 
+
         const [enrollments] = await db.execute(
             `
             SELECT
-                id,
-                status,
-                enrolled_at,
-                completed_at
-            FROM course_enrollments
-            WHERE user_id = ?
-              AND course_id = ?
+                ce.id,
+                ce.status,
+                ce.enrolled_at,
+                ce.completed_at,
+                CASE
+                    WHEN ce.status NOT IN (
+                        'active', 'completed'
+                    ) THEN 0
+
+                    WHEN ce.access_source = 'legacy'
+                    THEN 1
+
+                    WHEN ce.access_source = 'stripe'
+                         AND EXISTS (
+                            SELECT 1
+                            FROM course_subscriptions cs
+                            WHERE cs.user_id = ce.user_id
+                              AND cs.course_id = ce.course_id
+                              AND cs.status = 'active'
+                              AND cs.ended_at IS NULL
+                              AND cs.current_period_end >
+                                  UTC_TIMESTAMP()
+                         )
+                    THEN 1
+
+                    ELSE 0
+                END AS has_access
+            FROM course_enrollments ce
+            WHERE ce.user_id = ?
+              AND ce.course_id = ?
             LIMIT 1
             `,
             [userId, course.id]
         );
 
-        if (enrollments.length === 0) {
+
+
+        if (
+            enrollments.length === 0 ||
+            Number(enrollments[0].has_access) !== 1
+        ) {
+
             return res.status(200).json({
                 success: true,
                 enrolled: false,
@@ -2225,12 +2255,17 @@ export const getCourseEnrollment = async (req, res) => {
             });
         }
 
+
+        const { has_access, ...enrollment } =
+            enrollments[0];
+
         return res.status(200).json({
             success: true,
             enrolled: true,
             course,
-            enrollment: enrollments[0],
+            enrollment,
         });
+
     } catch (error) {
         console.error("Get course enrollment error:", error);
 
