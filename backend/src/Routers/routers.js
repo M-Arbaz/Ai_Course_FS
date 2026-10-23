@@ -29,9 +29,14 @@ import {
     getCourseLearningProgress,
 } from "../Controller/controller.js";
 import db from "../DB/db.js";
+
 import {
     createCourseCheckout,
 } from "../Controller/billing.controller.js";
+
+import {
+    createBillingPortalSession,
+} from "../Controller/billingPortal.controller.js";
 
 import {
     requireAuth,
@@ -44,11 +49,19 @@ import {
 
 const router = express.Router();
 
+
 router.post(
     "/billing/courses/:slug/checkout",
     requireAuth,
     createCourseCheckout
 );
+
+router.post(
+    "/billing/portal",
+    requireAuth,
+    createBillingPortalSession
+);
+
 // TEST ROUTE
 router.get("/test", (req, res) => {
     res.json({
