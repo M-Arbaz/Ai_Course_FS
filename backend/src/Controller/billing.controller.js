@@ -3,8 +3,14 @@ import "dotenv/config";
 import db from "../DB/db.js";
 import { getStripe } from "../Services/stripeClient.js";
 
+
 export const createCourseCheckout = async (req, res) => {
+    let checkoutLockConnection = null;
+    let checkoutLockAcquired = false;
+    let checkoutLockName = null;
+
     try {
+
         // Sandbox only
         if (
             process.env.STRIPE_CHECKOUT_TEST_ENABLED !== "true" ||
@@ -86,47 +92,98 @@ export const createCourseCheckout = async (req, res) => {
             });
         }
 
+
         const course = courses[0];
 
-        // Prevent charging already enrolled students
+        // Serialize checkout creation per user and course.
+        checkoutLockConnection = await db.getConnection();
+
+        checkoutLockName =
+            `ai-course-checkout-${userId}-${course.id}`;
+
+        const [lockRows] =
+            await checkoutLockConnection.execute(
+                "SELECT GET_LOCK(?, 10) AS acquired",
+                [checkoutLockName]
+            );
+
+        if (Number(lockRows[0]?.acquired) !== 1) {
+            return res.status(409).json({
+                success: false,
+                message:
+                    "Another checkout is being prepared. Please retry.",
+            });
+        }
+
+        checkoutLockAcquired = true;
+
+        // Legacy enrollments remain valid permanently.
+        // Stripe enrollments require valid paid access.
         const [enrollments] = await db.execute(
-            `SELECT id
-             FROM course_enrollments
-             WHERE user_id = ?
-               AND course_id = ?
-               AND status IN ('active', 'completed')
+            `SELECT
+                ce.id,
+                ce.status,
+                ce.access_source,
+                EXISTS (
+                    SELECT 1
+                    FROM course_subscriptions cs
+                    WHERE cs.user_id = ce.user_id
+                      AND cs.course_id = ce.course_id
+                      AND cs.status = 'active'
+                      AND cs.ended_at IS NULL
+                      AND cs.current_period_end >
+                          UTC_TIMESTAMP()
+                ) AS has_paid_access
+             FROM course_enrollments ce
+             WHERE ce.user_id = ?
+               AND ce.course_id = ?
              LIMIT 1`,
             [userId, course.id]
         );
 
-        if (enrollments.length) {
+        const alreadyHasAccess = enrollments.some(
+            (enrollment) =>
+                ["active", "completed"].includes(
+                    enrollment.status
+                ) &&
+                (
+                    enrollment.access_source === "legacy" ||
+                    (
+                        enrollment.access_source === "stripe" &&
+                        Number(
+                            enrollment.has_paid_access
+                        ) === 1
+                    )
+                )
+        );
+
+        if (alreadyHasAccess) {
             return res.status(409).json({
                 success: false,
-                message: "You already have access to this course.",
+                message:
+                    "You already have access to this course.",
             });
         }
 
-        // Prevent another ongoing subscription
-        const [subscriptions] = await db.execute(
-            `SELECT id
+        // Historical records are never deleted.
+        // Any previous subscription attempt makes
+        // the intro discount ineligible.
+        const [historyRows] = await db.execute(
+            `SELECT COUNT(*) AS subscription_count
              FROM course_subscriptions
              WHERE user_id = ?
-               AND course_id = ?
-               AND status IN (
-                   'active', 'trialing', 'past_due', 'unpaid'
-               )
-             LIMIT 1`,
+               AND course_id = ?`,
             [userId, course.id]
         );
 
-        if (subscriptions.length) {
-            return res.status(409).json({
-                success: false,
-                message: "A subscription already exists for this course.",
-            });
-        }
+        const hasDatabaseHistory =
+            Number(historyRows[0].subscription_count) > 0 ||
+            enrollments.some(
+                (row) => row.access_source === "stripe"
+            );
 
         const stripe = getStripe();
+
 
         // Verify configured monthly recurring price
         const price = await stripe.prices.retrieve(
@@ -145,31 +202,8 @@ export const createCourseCheckout = async (req, res) => {
             });
         }
 
-        // Verify first-payment discount
-        const couponId =
-            process.env.STRIPE_FIRST_MONTH_COUPON_ID;
 
-        if (!couponId) {
-            return res.status(503).json({
-                success: false,
-                message: "Subscription discount not configured.",
-            });
-        }
-
-        const coupon = await stripe.coupons.retrieve(couponId);
-
-        if (
-            !coupon.valid ||
-            coupon.percent_off !== 50 ||
-            coupon.duration !== "once"
-        ) {
-            return res.status(503).json({
-                success: false,
-                message: "First-month discount configuration is invalid.",
-            });
-        }
-
-        // Reuse an existing Stripe Customer if available
+        // Find the existing Stripe Customer.
         const [customers] = await db.execute(
             `SELECT stripe_customer_id
              FROM stripe_customers
@@ -179,15 +213,180 @@ export const createCourseCheckout = async (req, res) => {
             [userId]
         );
 
-        const customerData = customers.length
-            ? { customer: customers[0].stripe_customer_id }
-            : { customer_email: users[0].email };
+        let stripeCustomerId =
+            customers[0]?.stripe_customer_id || null;
+
+        // Fail closed if old billing records exist
+        // but the Stripe customer mapping is missing.
+        if (hasDatabaseHistory && !stripeCustomerId) {
+            return res.status(409).json({
+                success: false,
+                message:
+                    "Previous billing history requires account synchronization.",
+            });
+        }
+
+        // Persist the customer before Checkout.
+        // This lets us detect open Checkout Sessions.
+        if (!stripeCustomerId) {
+            const customer = await stripe.customers.create(
+                {
+                    email: users[0].email,
+                    metadata: {
+                        lms_user_id: String(userId),
+                    },
+                },
+                {
+                    idempotencyKey:
+                        `ai-course-test-customer-${userId}`,
+                }
+            );
+
+            await db.execute(
+                `INSERT INTO stripe_customers (
+                    user_id,
+                    stripe_customer_id,
+                    stripe_mode
+                )
+                VALUES (?, ?, 'test')
+                ON DUPLICATE KEY UPDATE
+                    stripe_customer_id =
+                        stripe_customer_id`,
+                [userId, customer.id]
+            );
+
+            const [savedCustomers] = await db.execute(
+                `SELECT stripe_customer_id
+                 FROM stripe_customers
+                 WHERE user_id = ?
+                   AND stripe_mode = 'test'
+                 LIMIT 1`,
+                [userId]
+            );
+
+            stripeCustomerId =
+                savedCustomers[0]?.stripe_customer_id;
+
+            if (!stripeCustomerId) {
+                throw new Error(
+                    "Unable to establish Stripe customer mapping."
+                );
+            }
+        }
+
+        // Verify actual Stripe subscription history,
+        // including canceled subscriptions.
+        let hasStripeHistory = false;
+        let hasOngoingSubscription = false;
+
+        for await (
+            const sub of stripe.subscriptions.list({
+                customer: stripeCustomerId,
+                status: "all",
+                limit: 100,
+            })
+        ) {
+            if (
+                String(sub.metadata?.user_id) !==
+                String(userId) ||
+                String(sub.metadata?.course_id) !==
+                String(course.id)
+            ) {
+                continue;
+            }
+
+            hasStripeHistory = true;
+
+            if (
+                ![
+                    "canceled",
+                    "incomplete_expired",
+                ].includes(sub.status)
+            ) {
+                hasOngoingSubscription = true;
+                break;
+            }
+        }
+
+        if (hasOngoingSubscription) {
+            return res.status(409).json({
+                success: false,
+                message:
+                    "A subscription already exists for this course. Manage the existing subscription before purchasing again.",
+            });
+        }
+
+        const introDiscountEligible =
+            !hasDatabaseHistory &&
+            !hasStripeHistory;
+
+        // Reuse an existing open Checkout Session.
+        // Avoid creating multiple payable sessions.
+        for await (
+            const openSession of
+            stripe.checkout.sessions.list({
+                customer: stripeCustomerId,
+                status: "open",
+                limit: 100,
+            })
+        ) {
+            if (
+                openSession.mode === "subscription" &&
+                openSession.metadata?.user_id ===
+                String(userId) &&
+                openSession.metadata?.course_id ===
+                String(course.id) &&
+                openSession.metadata?.price_id ===
+                course.stripe_price_id &&
+                openSession.url
+            ) {
+                return res.status(200).json({
+                    success: true,
+                    checkoutUrl: openSession.url,
+                });
+            }
+        }
+
+        // Only first-time subscribers receive coupon.
+        let couponId = null;
+
+        if (introDiscountEligible) {
+            couponId =
+                process.env.STRIPE_FIRST_MONTH_COUPON_ID;
+
+            if (!couponId) {
+                return res.status(503).json({
+                    success: false,
+                    message:
+                        "Introductory discount is not configured.",
+                });
+            }
+
+            const coupon =
+                await stripe.coupons.retrieve(couponId);
+
+            if (
+                !coupon.valid ||
+                coupon.percent_off !== 50 ||
+                coupon.duration !== "once"
+            ) {
+                return res.status(503).json({
+                    success: false,
+                    message:
+                        "Introductory discount configuration is invalid.",
+                });
+            }
+        }
+
+
 
         const metadata = {
             user_id: String(userId),
             course_id: String(course.id),
             course_slug: course.slug,
+            price_id: course.stripe_price_id,
         };
+
 
         const returnPath =
             `/courses/${encodeURIComponent(course.slug)}/enroll`;
@@ -196,7 +395,8 @@ export const createCourseCheckout = async (req, res) => {
             mode: "subscription",
             payment_method_types: ["card"],
 
-            ...customerData,
+
+            customer: stripeCustomerId,
 
             client_reference_id: String(userId),
 
@@ -207,11 +407,17 @@ export const createCourseCheckout = async (req, res) => {
                 },
             ],
 
-            discounts: [
-                {
-                    coupon: couponId,
-                },
-            ],
+
+            ...(introDiscountEligible
+                ? {
+                    discounts: [
+                        {
+                            coupon: couponId,
+                        },
+                    ],
+                }
+                : {}),
+
 
             metadata,
 
@@ -232,6 +438,7 @@ export const createCourseCheckout = async (req, res) => {
             checkoutUrl: session.url,
         });
 
+
     } catch (error) {
         console.error("Stripe checkout error:", error);
 
@@ -239,5 +446,24 @@ export const createCourseCheckout = async (req, res) => {
             success: false,
             message: "Unable to create checkout session.",
         });
+    } finally {
+        if (checkoutLockConnection) {
+            if (checkoutLockAcquired) {
+                await checkoutLockConnection
+                    .execute(
+                        "SELECT RELEASE_LOCK(?)",
+                        [checkoutLockName]
+                    )
+                    .catch((error) => {
+                        console.error(
+                            "Checkout lock release error:",
+                            error
+                        );
+                    });
+            }
+
+            checkoutLockConnection.release();
+        }
     }
 };
+

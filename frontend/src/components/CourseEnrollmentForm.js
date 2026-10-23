@@ -361,13 +361,17 @@ export default function CourseEnrollmentForm({
                                 securely to your signed-in
                                 account.
                             </p>
+
                             <p className="mt-5 text-sm leading-6 text-slate-600 dark:text-slate-300">
-                                Get 50% off your first billing period.
-                                Your subscription renews monthly at the
-                                regular course price until cancelled.
-                                The exact amounts and billing details
-                                will be shown before payment.
+                                Eligible first-time subscribers receive
+                                50% off their first billing period.
+                                Returning subscribers pay the regular
+                                monthly course price. Your subscription
+                                renews monthly until cancelled.
+                                Stripe Checkout will display your exact
+                                amount before payment.
                             </p>
+
                             <button
                                 type="submit"
                                 disabled={submitting}
